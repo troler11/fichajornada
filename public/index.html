@@ -142,14 +142,14 @@
             // ====================================================================
             
             // LINHA 4 DO PAPEL (Aprox. 1,6 cm do topo) -> Índice 3 do Array
-            pagina[3] = inserirNaPosicao(pagina[3], "001 TURISMO PAVAO LTDA", 18); // Empresa
-            pagina[3] = inserirNaPosicao(pagina[3], mot.nome.substring(0, 25), 40); // Nome (Cortado em 25 chars para não encavalar)
-            pagina[3] = inserirNaPosicao(pagina[3], mot.data, 66);                 // Data
+           pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 26); // Empresa (era 18, agora 26)
+            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 48); // Nome (era 40, agora 48)
+            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 74);
 
             // LINHA 5 DO PAPEL (Aprox. 2,0 cm do topo) -> Índice 4 do Array
-            pagina[4] = inserirNaPosicao(pagina[4], "10", 18);                     // Filial
-            pagina[4] = inserirNaPosicao(pagina[4], mot.id, 40);                   // Chapa
-            pagina[4] = inserirNaPosicao(pagina[4], "MOTORISTA MIC", 68);          // Função
+            pagina[1] = inserirNaPosicao(pagina[1], "10", 26);                     // Filial
+            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 48);                   // Chapa
+            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 76);
             
             // ====================================================================
             // HORÁRIOS DAS VIAGENS
