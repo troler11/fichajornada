@@ -104,23 +104,30 @@
             // ====================================================================
             
             // LINHA 0 (Onde estava a OS) - Se a OS sumir, suba o papel no rolete!
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 56); 
+           // ====================================================================
+            // CABEÇALHO - AJUSTADO PARA 1,0 CM (DESCENDO 1 LINHA)
+            // ====================================================================
+            
+            // LINHA 0 - Deixamos vazia para criar o recuo do topo
+            // pagina[0] fica apenas com espaços (padEnd)
 
-            // LINHA 1 (Subimos a Empresa/Nome/Data que estavam na Linha 1 para a Linha 1)
-            // Mantendo os índices baixos para forçar o topo
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 44); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 75);                 
+            // LINHA 1 (Agora em aprox. 1,0 cm do topo)
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 56); 
 
-            // LINHA 2 (Subimos Filial/Chapa/Função para a Linha 2)
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 10);                     
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 44);                   
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 74);
+            // LINHA 2 (Aprox. 1,4cm - 1,5cm)
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 10); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 20), 44); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 75);                 
+
+            // LINHA 3 (Aprox. 1,8cm)
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 10);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 44);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 74);
 
             // ====================================================================
-            // AJUSTE DAS VIAGENS (Subindo também 1 linha para acompanhar o cabeçalho)
+            // AJUSTE DAS VIAGENS (Descendo também para manter o espaçamento)
             // ====================================================================
-            let linhaAtual = 4; // Era 6, mudamos para 5 para subir ~0,4cm
+            let linhaAtual = 6; // Ajustado de 4 para 6 para descer junto com o cabeçalho
 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 30) {
