@@ -97,7 +97,8 @@
                     </div>
                     <table>
                         <tr>
-                            <th>Linha</th><th>Veículo</th><th>CheckList 1</th><th>Desloc. 1</th><th>Ponto Inic.</th>
+                            <th>Linha</th><th>Veículo</th><th>Check 1</th><th>Desloc. 1</th>
+                            <th>Pt. Inicial</th><th>Pt. Final</th><th>Desloc. 2</th><th>Check 2</th>
                         </tr>
             `;
             
@@ -109,6 +110,9 @@
                         <td>${v.checkList1 || ''}</td>
                         <td>${v.deslocamento1 || ''}</td>
                         <td>${v.pontoInicial || ''}</td>
+                        <td>${v.pontoFinal || ''}</td>
+                        <td>${v.deslocamento2 || ''}</td>
+                        <td>${v.checkList2 || ''}</td>
                     </tr>
                 `;
             });
