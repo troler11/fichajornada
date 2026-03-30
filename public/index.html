@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficha de Serviços - Matricial</title>
+    <title>Impressão Matricial - Ficha de Serviços</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -14,14 +14,13 @@
         .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
         .btn-success:hover { background-color: #218838; }
         
-        /* Simulação do PDF na tela */
-        .ficha { border: 2px solid #000; padding: 10px; margin-bottom: 30px; background: #fff; font-family: monospace; font-size: 13px; text-transform: uppercase; }
-        .header-ficha { text-align: center; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
-        .dados-motorista { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; text-align: center; }
-        th, td { border: 1px solid #000; padding: 4px; }
+        /* Visualização na tela */
+        .ficha { border: 2px solid #000; padding: 15px; margin-bottom: 30px; background: #fff; font-family: monospace; font-size: 13px; text-transform: uppercase; }
+        .header-ficha { text-align: center; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; }
+        .dados-motorista { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; text-align: center; }
+        th, td { border: 1px solid #000; padding: 6px; }
         th { background-color: #f0f0f0; }
-        .linha-realizado { height: 20px; background-color: #fafafa; }
     </style>
 </head>
 <body>
@@ -44,6 +43,7 @@
 <script>
     let motoristasGlobais = [];
 
+    // 1. Envia o Excel para o Backend
     async function processarPlanilha() {
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) {
@@ -74,7 +74,7 @@
         }
     }
 
-    // A visualização na tela continua bonita e com tabela para você conseguir conferir antes de imprimir
+    // 2. Desenha os dados na tela do navegador
     function renderizarVisualizacao(motoristas) {
         const divVisualizacao = document.getElementById('visualizacao');
         divVisualizacao.innerHTML = ''; 
@@ -122,44 +122,53 @@
         });
     }
 
+    // 3. Função Auxiliar para posicionar o texto na coluna exata
     function inserirNaPosicao(linhaBase, textoParaInserir, posicaoInicial) {
         if (!textoParaInserir) return linhaBase;
         const texto = String(textoParaInserir).toUpperCase();
         return linhaBase.substring(0, posicaoInicial) + texto + linhaBase.substring(posicaoInicial + texto.length);
     }
 
-    // O ARQUIVO TXT TOTALMENTE LIMPO: Somente os dados exatos!
+    // 4. Monta o TXT com as medidas exatas da régua
     function gerarTXT() {
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Cria a folha em branco com 33 linhas de 80 colunas
+            // Cria a folha em branco (33 linhas de altura, 80 colunas de largura)
             let pagina = Array(33).fill("".padEnd(80, " "));
 
             // ====================================================================
-            // CABEÇALHO - Ajuste o número dentro do [] para mudar a Linha (0 a 32)
-            // Ajuste o último número para mudar a Coluna da esquerda para a direita
+            // CABEÇALHO - Medidas Calibradas
             // ====================================================================
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); // Empresa
-            pagina[1] = inserirNaPosicao(pagina[1], "10", 65);                     // Filial
             
-            pagina[3] = inserirNaPosicao(pagina[3], mot.nome.substring(0, 35), 10); // Nome
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 65);                    // Chapa superior (se houver)
-            
-            pagina[4] = inserirNaPosicao(pagina[4], mot.id, 10);                    // Chapa inferior
-            pagina[4] = inserirNaPosicao(pagina[4], mot.data, 40);                  // Data
-            pagina[4] = inserirNaPosicao(pagina[4], "MOTORISTA MIC", 65);           // Função
+            // LINHA 4 DO PAPEL (Aprox. 1,6 cm do topo) -> Índice 3 do Array
+            pagina[3] = inserirNaPosicao(pagina[3], "001 TURISMO PAVAO LTDA", 18); // Empresa
+            pagina[3] = inserirNaPosicao(pagina[3], mot.nome.substring(0, 25), 40); // Nome (Cortado em 25 chars para não encavalar)
+            pagina[3] = inserirNaPosicao(pagina[3], mot.data, 66);                 // Data
+
+            // LINHA 5 DO PAPEL (Aprox. 2,0 cm do topo) -> Índice 4 do Array
+            pagina[4] = inserirNaPosicao(pagina[4], "10", 18);                     // Filial
+            pagina[4] = inserirNaPosicao(pagina[4], mot.id, 40);                   // Chapa
+            pagina[4] = inserirNaPosicao(pagina[4], "MOTORISTA MIC", 68);          // Função
             
             // ====================================================================
-            // HORÁRIOS - Loop de impressão das viagens
+            // HORÁRIOS DAS VIAGENS
             // ====================================================================
-            let linhaAtual = 8; // Define em qual linha do papel começa a primeira viagem
+            // Use sua régua para medir a distância do topo do papel até o primeiro
+            // horário impresso. Divida os cm por 2.54 e multiplique por 6. 
+            // Ex: Se o primeiro horário for 3,5 cm do topo: (3.5 / 2.54) * 6 = ~8
+            let linhaAtual = 8; 
             
             mot.viagens.forEach(v => {
-                if(linhaAtual < 28) { // Limite para não imprimir no rodapé do papel
+                // Impede que a impressão passe da linha 28 e suje o rodapé
+                if(linhaAtual < 28) { 
                     let strValores = "".padEnd(80, " ");
                     
-                    // Ajuste o último número de cada linha abaixo para alinhar com as colunas do seu papel!
+                    // ====================================================================
+                    // IMPORTANTE: AJUSTE OS NÚMEROS NO FINAL DE CADA LINHA ABAIXO!
+                    // Meça a distância da margem ESQUERDA até a coluna desejada.
+                    // Faça: (Centímetros / 2.54) * 10 = Coluna Exata
+                    // ====================================================================
                     strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         // Coluna Linha
                     strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 12);      // Coluna Veículo
                     strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 22);   // Coluna Chk 1
@@ -176,7 +185,7 @@
                 }
             });
 
-            // Remove acentos e junta tudo num arquivo só, pulando a página no final (\f)
+            // Remove acentos e junta tudo, pulando a página no final (\f)
             let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += paginaLimpa + "\f"; 
         });
@@ -184,7 +193,7 @@
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "impressao_matricial_limpa.txt";
+        link.download = "impressao_matricial_calibrada.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
