@@ -3,12 +3,10 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Adicionando suporte para o frontend ler JSON
 app.use(express.json());
-// Aqui você configuraria para servir sua página HTML (frontend)
 app.use(express.static('public')); 
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.post('/processar-excel', upload.single('planilha'), async (req: Request, res: Response): Promise<void> => {
     if (!req.file) {
@@ -18,61 +16,78 @@ app.post('/processar-excel', upload.single('planilha'), async (req: Request, res
 
     try {
         const workbook = new ExcelJS.Workbook();
+        // O "as any" evita aquele erro do TypeScript com o Buffer
         await workbook.xlsx.load(req.file.buffer as any);
         const worksheet = workbook.worksheets[0];
         
-        const motoristas = [];
+        const motoristas: any[] = [];
         let motoristaAtual: any = null;
 
         worksheet.eachRow((row, rowNumber) => {
-            // Função mais robusta para ler o valor da célula, não importa a formatação
+            // Função BLINDADA para ler qualquer formato de célula do Excel
             const lerCelula = (num: number) => {
                 const celula = row.getCell(num);
-                return celula.value ? celula.value.toString().trim() : '';
+                if (!celula || celula.value === null || celula.value === undefined) return '';
+                
+                if (typeof celula.value === 'object') {
+                    if ('richText' in celula.value) {
+                        return celula.value.richText.map((rt: any) => rt.text).join('').trim();
+                    }
+                    if ('result' in celula.value) {
+                        return String(celula.value.result).trim();
+                    }
+                    if (celula.value instanceof Date) {
+                        return celula.value.toLocaleDateString('pt-BR');
+                    }
+                }
+                return String(celula.value).trim();
             };
 
-            const colG = lerCelula(7);  // Coluna G (Nome ou ID)
-            const colK = lerCelula(11); // Coluna K (Data)
-            const colB = lerCelula(2);  // Coluna B (Linha/Código)
+            const colG = lerCelula(7);  // Coluna G
+            const colK = lerCelula(11); // Coluna K
+            const colB = lerCelula(2);  // Coluna B
 
-            // REGRA 1: Detectar se é uma linha de Cabeçalho de Motorista
-            // Agora procura pelo hífen, mesmo se os espaços ao redor estiverem diferentes
-            if (colG.includes('-') && colK !== '') {
+            // REGRA 1: Detectar Cabeçalho do Motorista
+            // Se a Coluna G tem nome, a Coluna K tem data, e a Coluna B está vazia
+            if (colG.length > 5 && colK.length > 5 && colB === '') {
                 if (motoristaAtual) motoristas.push(motoristaAtual);
                 
-                // Divide "000204 - FRANCLIN GAMA" separando o ID do Nome
-                const partes = colG.split('-');
+                let id = "N/D";
+                let nome = colG;
+                
+                // Separa o ID do Nome se tiver o traço
+                if (colG.includes('-')) {
+                    const partes = colG.split('-');
+                    id = partes[0].trim();
+                    nome = partes.slice(1).join('-').trim();
+                }
+
                 motoristaAtual = {
-                    id: partes[0].trim(),
-                    nome: partes.slice(1).join('-').trim(), // Pega tudo depois do primeiro hífen
+                    id: id,
+                    nome: nome,
                     data: colK,
                     viagens: []
                 };
             }
-            // REGRA 2: Detectar se é uma linha de Viagem Programada (tem dados na Coluna B)
-            else if (motoristaAtual && colB !== '' && rowNumber > 1) {
-                // Para não pegar as linhas de "Realizado" (que não tem a linha preenchida igual)
-                // Se a sua linha "Realizado" também tiver a coluna B preenchida, me avise!
-                const viagem = {
+            // REGRA 2: Detectar Viagem (Tem dados na Coluna B e já achou um motorista)
+            else if (motoristaAtual && colB !== '' && rowNumber > 2) {
+                motoristaAtual.viagens.push({
                     linha: colB,
                     veiculo: lerCelula(3),       // Col C
                     checkList1: lerCelula(4),    // Col D
                     deslocamento1: lerCelula(5), // Col E
                     pontoInicial: lerCelula(6)   // Col F
-                };
-                
-                motoristaAtual.viagens.push(viagem);
+                });
             }
         });
 
         if (motoristaAtual) motoristas.push(motoristaAtual);
 
-        // Devolve os dados em JSON para a tela do site!
         res.json(motoristas);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Erro ao ler a planilha.');
+        console.error("Erro ao processar planilha:", error);
+        res.status(500).send('Erro interno ao ler a planilha.');
     }
 });
 
