@@ -132,42 +132,68 @@
     // 4. Monta o TXT com as medidas exatas da régua
     // 4. Monta o TXT com as medidas exatas da régua
     function gerarTXT() {
-    let textoFinal = "";
-    
-    // Criamos uma única página de teste
-    // Baseado no seu papel de 14cm (33 linhas) e 21cm (82 colunas)
-    let pagina = Array(33).fill("".padEnd(82, " "));
+        let textoFinal = "";
 
-    // 1. Criamos uma régua horizontal no topo (Colunas)
-    // Isso vai imprimir 1234567890 repetidamente para você contar as colunas
-    let reguaHorizontal = "";
-    for (let i = 0; i < 8.2; i++) reguaHorizontal += "1234567890";
-    pagina[0] = reguaHorizontal;
+        motoristasGlobais.forEach(mot => {
+            // TRAVADO NO TAMANHO EXATO DO PAPEL: 33 Linhas de altura, 82 Colunas de largura
+            let pagina = Array(33).fill("".padEnd(82, " "));
 
-    // 2. Criamos uma régua vertical na lateral (Linhas)
-    // Isso vai imprimir o número da linha no início de cada uma
-    for (let l = 1; l < 33; l++) {
-        let numLinha = String(l).padStart(2, '0');
-        // Preenchemos a linha com o seu próprio número para facilitar a leitura
-        pagina[l] = numLinha + " " + ".".repeat(79);
+            // ====================================================================
+            // CABEÇALHO - Descontando a margem morta de 2.6cm da impressora
+            // ====================================================================
+            
+            // LINHA DE CIMA (Índice 0)
+            // Para cair no 4,5cm físico, usamos a coluna 7 no código
+            pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 7);  
+            // Para cair no 10,2cm físico (10,2 - 2,6 = 7,6cm), usamos a coluna 30
+            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 30); 
+            // Para cair no 16,7cm físico (16,7 - 2,6 = 14,1cm), usamos a coluna 55
+            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 55);                 
+
+            // LINHA DE BAIXO (Índice 1)
+            pagina[1] = inserirNaPosicao(pagina[1], "10", 7);                     
+            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 30);                   
+            // Para cair no 17,2cm físico (17,2 - 2,6 = 14,6cm), usamos a coluna 57
+            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 57);          
+            
+            // ====================================================================
+            // HORÁRIOS DAS VIAGENS
+            // ====================================================================
+            let linhaAtual = 8; // Ajuste este número para descer os horários se necessário
+            
+            mot.viagens.forEach(v => {
+                if(linhaAtual < 28) { 
+                    let strValores = "".padEnd(82, " ");
+                    
+                    // Colunas das viagens (ajuste os números no final conforme a régua, 
+                    // lembrando de descontar os 2,6 cm da impressora primeiro!)
+                    strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         
+                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 10);      
+                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 18);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 26);
+                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 34); 
+                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 42);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 50);
+                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 58);   
+
+                    pagina[linhaAtual] = strValores;
+                    linhaAtual += 2; 
+                }
+            });
+
+            // Remove acentos e junta tudo, incluindo o Pulo de Página (\f)
+            let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            textoFinal += paginaLimpa + "\f"; 
+        });
+
+        const blob = new Blob([textoFinal], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "impressao_matricial_final.txt";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-
-    // 3. Marcamos pontos estratégicos que você mediu para conferência
-    // Empresa (4,5cm -> Coluna 18 aprox)
-    pagina[3] = inserirNaPosicao(pagina[3], "#### EMPRESA AQUI (LINHA 4) ####", 18);
-    // Nome (10,2cm -> Coluna 40 aprox)
-    pagina[3] = inserirNaPosicao(pagina[3], "#### NOME AQUI ####", 40);
-
-    let conteudoTeste = pagina.join("\n") + "\f";
-
-    const blob = new Blob([conteudoTeste], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "GABARITO_CALIBRACAO.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
 </script>
 
 </body>
