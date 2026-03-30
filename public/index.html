@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impressão Matricial - Ficha de Serviços</title>
+    <title>Emissor Ficha de Serviço - Pavao</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { font-size: 22px; color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
-        .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; text-align: center; }
-        button { padding: 10px 15px; font-size: 16px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
-        button:hover { background-color: #004494; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 20px; color: #333; border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
+        .upload-area { margin: 20px 0; padding: 30px; border: 2px dashed #0056b3; text-align: center; border-radius: 5px; }
+        button { padding: 12px 20px; font-size: 16px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; transition: 0.3s; }
+        button:hover { background-color: #003d7a; }
         .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
         .btn-success:hover { background-color: #218838; }
-        
-        /* Visualização na tela */
-        .ficha { border: 2px solid #000; padding: 15px; margin-bottom: 30px; background: #fff; font-family: monospace; font-size: 13px; text-transform: uppercase; }
-        .header-ficha { text-align: center; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; }
-        .dados-motorista { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; text-align: center; }
-        th, td { border: 1px solid #000; padding: 6px; }
-        th { background-color: #f0f0f0; }
+        .ficha-previa { margin-top: 20px; border: 1px solid #ddd; padding: 15px; font-family: monospace; background: #fafafa; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -29,25 +22,25 @@
     <h1>Emissor de Ficha de Serviços (Portaria nº 3.626)</h1>
     
     <div class="upload-area">
-        <p>Selecione a planilha Excel (.xlsx):</p>
+        <p>Selecione a planilha Excel para processamento:</p>
         <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
         <br><br>
-        <button onclick="processarPlanilha()">1. Visualizar e Processar Dados</button>
+        <button onclick="processarPlanilha()">1. Carregar e Visualizar Dados</button>
     </div>
 
     <div id="visualizacao"></div>
 
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Baixar Arquivo TXT para Matricial</button>
+    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar Arquivo para Impressora Matricial</button>
 </div>
 
 <script>
     let motoristasGlobais = [];
 
-    // 1. Envia o Excel para o Backend
+    // 1. Envia a planilha para o servidor
     async function processarPlanilha() {
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) {
-            alert("Por favor, selecione um arquivo Excel primeiro.");
+            alert("Selecione um arquivo primeiro.");
             return;
         }
 
@@ -56,143 +49,102 @@
 
         try {
             const response = await fetch('/processar-excel', { method: 'POST', body: formData });
-            if (!response.ok) throw new Error("Erro ao processar arquivo no servidor.");
+            if (!response.ok) throw new Error("Erro no processamento.");
 
             motoristasGlobais = await response.json();
             
             if (motoristasGlobais.length === 0) {
-                alert("O Excel foi lido, mas nenhum motorista foi encontrado. Verifique o padrão da planilha.");
+                alert("Nenhum dado encontrado na planilha. Verifique o modelo.");
                 return;
             }
 
-            renderizarVisualizacao(motoristasGlobais);
+            renderizarTela(motoristasGlobais);
             document.getElementById('btnImprimir').style.display = 'block';
 
         } catch (error) {
             console.error(error);
-            alert("Erro ao ler a planilha. O servidor backend está rodando?");
+            alert("Erro ao conectar com o servidor.");
         }
     }
 
-    // 2. Desenha os dados na tela do navegador
-    function renderizarVisualizacao(motoristas) {
-        const divVisualizacao = document.getElementById('visualizacao');
-        divVisualizacao.innerHTML = ''; 
-
-        motoristas.forEach(mot => {
-            let html = `
-                <div class="ficha">
-                    <div class="header-ficha">Visualização dos Dados Extraídos</div>
-                    <div class="dados-motorista">
-                        <div>
-                            <strong>EMPRESA:</strong> 001 TURISMO PAVAO LTDA<br>
-                            <strong>FILIAL:</strong> 10<br>
-                            <strong>NOME:</strong> ${mot.nome}<br>
-                            <strong>CHAPA:</strong> ${mot.id}
-                        </div>
-                        <div style="text-align: right;">
-                            <strong>DATA:</strong> ${mot.data}<br>
-                            <strong>FUNÇÃO:</strong> MOTORISTA MIC
-                        </div>
-                    </div>
-                    <table>
-                        <tr>
-                            <th>LINHA</th><th>VEÍCULO</th><th>CHK 1</th><th>DES 1</th>
-                            <th>PT INICIAL</th><th>PT FINAL</th><th>DES 2</th><th>CHK 2</th>
-                        </tr>
-            `;
-            
-            mot.viagens.forEach(v => {
-                html += `
-                    <tr>
-                        <td>${v.linha || ''}</td>
-                        <td>${v.veiculo || ''}</td>
-                        <td>${v.checkList1 || ''}</td>
-                        <td>${v.deslocamento1 || ''}</td>
-                        <td>${v.pontoInicial || ''}</td>
-                        <td>${v.pontoFinal || ''}</td>
-                        <td>${v.deslocamento2 || ''}</td>
-                        <td>${v.checkList2 || ''}</td>
-                    </tr>
-                `;
-            });
-
-            html += `</table></div>`;
-            divVisualizacao.innerHTML += html;
+    // 2. Mostra uma prévia na tela (apenas para conferência)
+    function renderizarTela(motoristas) {
+        const div = document.getElementById('visualizacao');
+        div.innerHTML = '<h3>Prévia dos dados:</h3>';
+        motoristas.forEach(m => {
+            div.innerHTML += `<div class="ficha-previa">
+                <strong>Motorista:</strong> ${m.nome} | <strong>Data:</strong> ${m.data} | <strong>Viagens:</strong> ${m.viagens.length}
+            </div>`;
         });
     }
 
-    // 3. Função Auxiliar para posicionar o texto na coluna exata
-    function inserirNaPosicao(linhaBase, textoParaInserir, posicaoInicial) {
-        if (!textoParaInserir) return linhaBase;
-        const texto = String(textoParaInserir).toUpperCase();
-        return linhaBase.substring(0, posicaoInicial) + texto + linhaBase.substring(posicaoInicial + texto.length);
+    // 3. Função de posicionamento por colunas
+    function inserirNaPosicao(linhaBase, texto, pos) {
+        if (!texto) return linhaBase;
+        const txt = String(texto).toUpperCase();
+        return linhaBase.substring(0, pos) + txt + linhaBase.substring(pos + txt.length);
     }
 
-    // 4. Monta o TXT com as medidas exatas da régua
-    // 4. Monta o TXT com as medidas exatas da régua
+    // 4. GERAÇÃO DO ARQUIVO TXT CALIBRADO (82 colunas x 33 linhas)
     function gerarTXT() {
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // TRAVADO NO TAMANHO EXATO DO PAPEL: 33 Linhas de altura, 82 Colunas de largura
+            // Papel Meio Ofício (14cm altura = 33 linhas | 21cm largura = 82 colunas)
             let pagina = Array(33).fill("".padEnd(82, " "));
 
             // ====================================================================
-            // CABEÇALHO - Descontando a margem morta de 2.6cm da impressora
+            // CABEÇALHO - CALIBRAÇÃO POR RÉGUA (Descontando 2,6cm de margem lateral)
             // ====================================================================
             
-            // ====================================================================
-// CABEÇALHO CALIBRADO PARA 1CM DO TOPO
-// ====================================================================
+            // LINHA 1 (Topo - 1,0cm)
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 39); // 12,5cm -> Col 39
 
-// Diminuímos os índices para o texto começar "colado" no início do arquivo
-// Se antes usamos pagina[3], agora usamos pagina[0] para subir o máximo possível.
+            // LINHA 2 (1,4cm - 1,5cm)
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 7); // 4,5cm -> Col 7
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 22), 31); // 10,4cm -> Col 31
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 57);                  // 17cm -> Col 57
 
-// LINHA 1 (Onde sai Empresa, Nome, Data) - Agora no índice 0
-pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 7);  
-pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 30); 
-pagina[0] = inserirNaPosicao(pagina[0], mot.data, 55);                 
+            // LINHA 3 (1,8cm)
+            pagina[2] = inserirNaPosicao(pagina[2], "10", 7);                      // Filial 4,5cm
+            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 31);                    // Chapa 10,4cm
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 57);           // Funcao 17cm
 
-// LINHA 2 (Onde sai Filial, Chapa, Função) - Agora no índice 1
-pagina[1] = inserirNaPosicao(pagina[1], "10", 7);                     
-pagina[1] = inserirNaPosicao(pagina[1], mot.id, 30);                   
-pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 57);
-            
             // ====================================================================
-            // HORÁRIOS DAS VIAGENS
+            // TABELA DE VIAGENS - INÍCIO EM 2,7CM DO TOPO
             // ====================================================================
-            let linhaAtual = 8; // Ajuste este número para descer os horários se necessário
+            let linhaAtual = 6; // Linha 7 do arquivo físico
             
             mot.viagens.forEach(v => {
-                if(linhaAtual < 28) { 
-                    let strValores = "".padEnd(82, " ");
+                if(linhaAtual < 30) {
+                    let str = "".padEnd(82, " ");
                     
-                    // Colunas das viagens (ajuste os números no final conforme a régua, 
-                    // lembrando de descontar os 2,6 cm da impressora primeiro!)
-                    strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         
-                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 10);      
-                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 18);   
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 26);
-                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 34); 
-                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 42);   
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 50);
-                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 58);   
+                    // Coluna LINHA (1cm -> Margem física 0)
+                    str = inserirNaPosicao(str, (v.linha || "").substring(0,10), 0);
+                    // Coluna VEÍCULO (Aprox 4cm -> Col 6)
+                    str = inserirNaPosicao(str, (v.veiculo || "").substring(0,7), 6);
+                    // Horários (Ajuste as posições 18, 28, 38, 48... conforme sua régua)
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 18);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 28);
+                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 38);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 48);
+                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 58);
+                    str = inserirNaPosicao(str, (v.checkList2 || ""), 68);
 
-                    pagina[linhaAtual] = strValores;
-                    linhaAtual += 2; 
+                    pagina[linhaAtual] = str;
+                    linhaAtual += 2; // Pula linha para o "Realizado" do formulário
                 }
             });
 
-            // Remove acentos e junta tudo, incluindo o Pulo de Página (\f)
-            let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            textoFinal += paginaLimpa + "\f"; 
+            // Une as linhas e adiciona o caractere de quebra de página (\f)
+            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            textoFinal += limpo + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "impressao_matricial_final.txt";
+        link.download = "ficha_servico_pavao.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
