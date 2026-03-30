@@ -26,17 +26,14 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-# Copia apenas o package.json
 COPY package*.json ./
-
-# Instala APENAS as dependências de produção (ignora o typescript e @types)
 RUN npm install --only=production
 
-# Copia a pasta /dist compilada que foi gerada no ESTÁGIO 1
+# Copia o código compilado
 COPY --from=builder /usr/src/app/dist ./dist
 
-# Expõe a porta do Express
-EXPOSE 3000
+# ADICIONE ESTA LINHA: Copia a tela do sistema (o HTML) para o servidor
+COPY public/ ./public/
 
-# Inicia o servidor rodando o arquivo JavaScript final
+EXPOSE 3000
 CMD ["npm", "start"]
