@@ -3,52 +3,69 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 
 const app = express();
-
-// Usamos a memória para não precisar salvar o Excel no HD do servidor
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.post('/upload', upload.single('planilha'), async (req: Request, res: Response): Promise<void> => {
-    try {
-        if (!req.file) {
-            res.status(400).send('Nenhum arquivo enviado.');
-            return;
-        }
+// Adicionando suporte para o frontend ler JSON
+app.use(express.json());
+// Aqui você configuraria para servir sua página HTML (frontend)
+app.use(express.static('public')); 
 
+app.post('/processar-excel', upload.single('planilha'), async (req: Request, res: Response): Promise<void> => {
+    if (!req.file) {
+        res.status(400).send('Nenhum arquivo enviado.');
+        return;
+    }
+
+    try {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(req.file.buffer);
-        
-        // Pega a primeira aba da planilha
         const worksheet = workbook.worksheets[0];
-        let textoParaImpressora = '';
+        
+        const motoristas = [];
+        let motoristaAtual: any = null;
 
-        // Itera sobre cada linha da planilha
         worksheet.eachRow((row, rowNumber) => {
-            // Pula a linha 1 se for o cabeçalho
-            if (rowNumber === 1) return; 
+            const colG = row.getCell(7).text; // Coluna G (Nome ou ID)
+            const colK = row.getCell(11).text; // Coluna K (Data)
+            const colB = row.getCell(2).text; // Coluna B (Linha)
 
-            // Extrai os dados das colunas (Ex: Coluna 1 = Nome, Coluna 2 = Valor)
-            // O padEnd(30, ' ') garante que o Nome SEMPRE ocupe 30 caracteres.
-            const nome = row.getCell(1).text.padEnd(30, ' '); 
-            
-            // O padStart(10, ' ') alinha números à direita, ocupando 10 caracteres.
-            const valor = row.getCell(2).text.padStart(10, ' '); 
-
-            // Monta a linha do formulário e adiciona uma quebra de linha (\n)
-            textoParaImpressora += `${nome}${valor}\n`;
+            // REGRA 1: Detectar se é uma linha de Cabeçalho de Motorista
+            if (colG.includes(' - ') && colK !== '') {
+                // Se já tínhamos um motorista sendo processado, salva ele na lista
+                if (motoristaAtual) motoristas.push(motoristaAtual);
+                
+                const [id, nome] = colG.split(' - ');
+                motoristaAtual = {
+                    id: id.trim(),
+                    nome: nome.trim(),
+                    data: colK.trim(),
+                    viagens: []
+                };
+            }
+            // REGRA 2: Detectar se é uma linha de Viagem Programada (tem a Linha na Col B)
+            else if (motoristaAtual && colB !== '' && rowNumber > 3) {
+                const viagem = {
+                    linha: colB,
+                    veiculo: row.getCell(3).text, // Col C
+                    checkList1: row.getCell(4).text, // Col D (Ajuste conforme sua planilha)
+                    deslocamento1: row.getCell(5).text, // Col E
+                    pontoInicial: row.getCell(6).text, // Col F
+                    // ... mapear o restante das colunas ...
+                };
+                motoristaAtual.viagens.push(viagem);
+            }
         });
 
-        // Configura a resposta para forçar o download de um arquivo .txt
-        res.setHeader('Content-disposition', 'attachment; filename=formulario_matricial.txt');
-        res.setHeader('Content-type', 'text/plain');
-        res.send(textoParaImpressora);
+        // Adiciona o último motorista lido à lista
+        if (motoristaAtual) motoristas.push(motoristaAtual);
+
+        // Devolve os dados em JSON para a tela do site!
+        res.json(motoristas);
 
     } catch (error) {
-        console.error('Erro ao processar planilha:', error);
-        res.status(500).send('Erro interno ao processar o arquivo.');
+        console.error(error);
+        res.status(500).send('Erro ao ler a planilha.');
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor TypeScript rodando na porta ${PORT}`);
-});
+app.listen(3000, () => console.log('Servidor rodando na porta 3000'));
