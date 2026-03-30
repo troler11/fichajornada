@@ -88,63 +88,54 @@
     // 4. GERAÇÃO DO ARQUIVO TXT CALIBRADO (82 colunas x 33 linhas)
     function gerarTXT() {
         let textoFinal = "";
+        
+        // Comando ESC/P para Fonte Condensada (Decimal 15)
+        const FONTE_CONDENSADA = String.fromCharCode(15);
+        // Comando ESC/P para Reset/Fonte Normal (Decimal 18)
+        const FONTE_NORMAL = String.fromCharCode(18);
 
         motoristasGlobais.forEach(mot => {
-            // Papel Meio Ofício (14cm altura = 33 linhas | 21cm largura = 82 colunas)
+            // Criamos a página (82 colunas é o padrão normal, 
+            // mas com fonte condensada você pode chegar a 137 se precisar)
             let pagina = Array(33).fill("".padEnd(82, " "));
 
-            // ====================================================================
-            // CABEÇALHO - CALIBRAÇÃO POR RÉGUA (Descontando 2,6cm de margem lateral)
-            // ====================================================================
-            
-            // LINHA 1 (Topo - 1,0cm)
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 39); // 12,5cm -> Col 39
+            // --- CABEÇALHO ---
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 39); 
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 7);
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 22), 31);
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 57);
+            pagina[2] = inserirNaPosicao(pagina[2], "10", 7);
+            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 31);
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 57);
 
-            // LINHA 2 (1,4cm - 1,5cm)
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 7); // 4,5cm -> Col 7
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 22), 31); // 10,4cm -> Col 31
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 57);                  // 17cm -> Col 57
-
-            // LINHA 3 (1,8cm)
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 7);                      // Filial 4,5cm
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 31);                    // Chapa 10,4cm
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 57);           // Funcao 17cm
-
-            // ====================================================================
-            // TABELA DE VIAGENS - INÍCIO EM 2,7CM DO TOPO
-            // ====================================================================
-            let linhaAtual = 6; // Linha 7 do arquivo físico
-            
+            // --- VIAGENS ---
+            let linhaAtual = 6;
             mot.viagens.forEach(v => {
                 if(linhaAtual < 30) {
                     let str = "".padEnd(82, " ");
-                    
-                    // Coluna LINHA (1cm -> Margem física 0)
                     str = inserirNaPosicao(str, (v.linha || "").substring(0,10), 0);
-                    // Coluna VEÍCULO (Aprox 4cm -> Col 6)
                     str = inserirNaPosicao(str, (v.veiculo || "").substring(0,7), 6);
-                    // Horários (Ajuste as posições 18, 28, 38, 48... conforme sua régua)
                     str = inserirNaPosicao(str, (v.checkList1 || ""), 18);
                     str = inserirNaPosicao(str, (v.deslocamento1 || ""), 28);
                     str = inserirNaPosicao(str, (v.pontoInicial || ""), 38);
                     str = inserirNaPosicao(str, (v.pontoFinal || ""), 48);
                     str = inserirNaPosicao(str, (v.deslocamento2 || ""), 58);
                     str = inserirNaPosicao(str, (v.checkList2 || ""), 68);
-
                     pagina[linhaAtual] = str;
-                    linhaAtual += 2; // Pula linha para o "Realizado" do formulário
+                    linhaAtual += 2;
                 }
             });
 
-            // Une as linhas e adiciona o caractere de quebra de página (\f)
-            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            textoFinal += limpo + "\f"; 
+            // Adiciona o comando de fonte condensada no INÍCIO da página
+            // e o comando de reset/pulo de página no FINAL
+            let conteudoPagina = FONTE_CONDENSADA + pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            textoFinal += conteudoPagina + FONTE_NORMAL + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_servico_pavao.txt";
+        link.download = "ficha_fonte_pequena.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
