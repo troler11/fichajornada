@@ -74,6 +74,7 @@
         }
     }
 
+    // A visualização na tela continua bonita e com tabela para você conseguir conferir antes de imprimir
     function renderizarVisualizacao(motoristas) {
         const divVisualizacao = document.getElementById('visualizacao');
         divVisualizacao.innerHTML = ''; 
@@ -81,11 +82,12 @@
         motoristas.forEach(mot => {
             let html = `
                 <div class="ficha">
-                    <div class="header-ficha">Ficha de serviços de acordo com a portaria nº 3.626 de 13/11/1991</div>
+                    <div class="header-ficha">Visualização dos Dados Extraídos</div>
                     <div class="dados-motorista">
                         <div>
                             <strong>EMPRESA:</strong> 001 TURISMO PAVAO LTDA<br>
-                            <strong>NOME:</strong> ${mot.id} - ${mot.nome}<br>
+                            <strong>FILIAL:</strong> 10<br>
+                            <strong>NOME:</strong> ${mot.nome}<br>
                             <strong>CHAPA:</strong> ${mot.id}
                         </div>
                         <div style="text-align: right;">
@@ -95,28 +97,22 @@
                     </div>
                     <table>
                         <tr>
-                            <th>LINHA</th><th>VEÍCULO</th><th>P/R</th><th>CHK 1</th><th>DES 1</th>
+                            <th>LINHA</th><th>VEÍCULO</th><th>CHK 1</th><th>DES 1</th>
                             <th>PT INICIAL</th><th>PT FINAL</th><th>DES 2</th><th>CHK 2</th>
                         </tr>
             `;
             
             mot.viagens.forEach(v => {
-                // Linha do Programado
                 html += `
                     <tr>
                         <td>${v.linha || ''}</td>
                         <td>${v.veiculo || ''}</td>
-                        <td><strong>P</strong></td>
                         <td>${v.checkList1 || ''}</td>
                         <td>${v.deslocamento1 || ''}</td>
                         <td>${v.pontoInicial || ''}</td>
                         <td>${v.pontoFinal || ''}</td>
                         <td>${v.deslocamento2 || ''}</td>
                         <td>${v.checkList2 || ''}</td>
-                    </tr>
-                    <tr class="linha-realizado">
-                        <td></td><td></td><td><strong>R</strong></td>
-                        <td></td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
                 `;
             });
@@ -132,74 +128,55 @@
         return linhaBase.substring(0, posicaoInicial) + texto + linhaBase.substring(posicaoInicial + texto.length);
     }
 
-    // A MÁGICA ACONTECE AQUI: Montando as colunas e linhas para a impressora
+    // O ARQUIVO TXT TOTALMENTE LIMPO: Somente os dados exatos!
     function gerarTXT() {
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
+            // Cria a folha em branco com 33 linhas de 80 colunas
             let pagina = Array(33).fill("".padEnd(80, " "));
 
-            // 1. Cabeçalho
-            pagina[0] = "-".repeat(80);
-            pagina[1] = inserirNaPosicao(pagina[1], "Ficha de servicos conf. portaria n. 3.626 de 13/11/1991", 10);
-            pagina[2] = inserirNaPosicao(pagina[2], "EMPRESA: 001 TURISMO PAVAO LTDA", 0);
-            pagina[3] = inserirNaPosicao(pagina[3], `NOME: ${mot.id} - ${mot.nome.substring(0, 30)}`, 0);
-            pagina[3] = inserirNaPosicao(pagina[3], `DATA: ${mot.data}`, 60);
-            pagina[4] = inserirNaPosicao(pagina[4], `CHAPA: ${mot.id}`, 0);
-            pagina[4] = inserirNaPosicao(pagina[4], `FUNCAO: MOTORISTA MIC`, 60);
+            // ====================================================================
+            // CABEÇALHO - Ajuste o número dentro do [] para mudar a Linha (0 a 32)
+            // Ajuste o último número para mudar a Coluna da esquerda para a direita
+            // ====================================================================
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); // Empresa
+            pagina[1] = inserirNaPosicao(pagina[1], "10", 65);                     // Filial
             
-            // 2. Títulos das Colunas (Limitado a 80 caracteres)
-            pagina[5] = "-".repeat(80);
-            pagina[6] = "LINHA   |VEICULO|P|CHK 1|DES 1|PT.IN|PT.FI|DES 2|CHK 2|LARG.|ENT/INI|REALIZ.";
-            pagina[7] = "-".repeat(80);
-
-            // 3. Loop das Viagens
-            let linhaAtual = 8;
+            pagina[3] = inserirNaPosicao(pagina[3], mot.nome.substring(0, 35), 10); // Nome
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 65);                    // Chapa superior (se houver)
+            
+            pagina[4] = inserirNaPosicao(pagina[4], mot.id, 10);                    // Chapa inferior
+            pagina[4] = inserirNaPosicao(pagina[4], mot.data, 40);                  // Data
+            pagina[4] = inserirNaPosicao(pagina[4], "MOTORISTA MIC", 65);           // Função
+            
+            // ====================================================================
+            // HORÁRIOS - Loop de impressão das viagens
+            // ====================================================================
+            let linhaAtual = 8; // Define em qual linha do papel começa a primeira viagem
+            
             mot.viagens.forEach(v => {
-                if(linhaAtual < 20) { 
-                    // Linha P (Programado)
-                    let strP = "".padEnd(80, " ");
-                    strP = inserirNaPosicao(strP, (v.linha || "").substring(0,8), 0);
-                    strP = inserirNaPosicao(strP, "|", 8);
-                    strP = inserirNaPosicao(strP, (v.veiculo || "").substring(0,7), 9);
-                    strP = inserirNaPosicao(strP, "|P|", 16);
-                    strP = inserirNaPosicao(strP, (v.checkList1 || "").substring(0,5), 19);
-                    strP = inserirNaPosicao(strP, "|", 24);
-                    strP = inserirNaPosicao(strP, (v.deslocamento1 || "").substring(0,5), 25);
-                    strP = inserirNaPosicao(strP, "|", 30);
-                    strP = inserirNaPosicao(strP, (v.pontoInicial || "").substring(0,5), 31);
-                    strP = inserirNaPosicao(strP, "|", 36);
-                    strP = inserirNaPosicao(strP, (v.pontoFinal || "").substring(0,5), 37);
-                    strP = inserirNaPosicao(strP, "|", 42);
-                    strP = inserirNaPosicao(strP, (v.deslocamento2 || "").substring(0,5), 43);
-                    strP = inserirNaPosicao(strP, "|", 48);
-                    strP = inserirNaPosicao(strP, (v.checkList2 || "").substring(0,5), 49);
-                    strP = inserirNaPosicao(strP, "|", 54);
-                    // Colunas que não mapeamos no backend, deixamos espaço para preencher a caneta
-                    strP = inserirNaPosicao(strP, "     |       |", 55); 
+                if(linhaAtual < 28) { // Limite para não imprimir no rodapé do papel
+                    let strValores = "".padEnd(80, " ");
+                    
+                    // Ajuste o último número de cada linha abaixo para alinhar com as colunas do seu papel!
+                    strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         // Coluna Linha
+                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 12);      // Coluna Veículo
+                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 22);   // Coluna Chk 1
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 32);// Coluna Desl 1
+                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 42); // Coluna Pt Inicial
+                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 52);   // Coluna Pt Final
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 62);// Coluna Desl 2
+                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 72);   // Coluna Chk 2
 
-                    // Linha R (Realizado)
-                    let strR = "".padEnd(80, " ");
-                    strR = inserirNaPosicao(strR, "        |       |R|     |     |     |     |     |     |     |       |", 0);
-
-                    pagina[linhaAtual] = strP;
-                    pagina[linhaAtual+1] = strR;
-                    linhaAtual += 2;
+                    pagina[linhaAtual] = strValores;
+                    
+                    // Pula 2 linhas para a próxima viagem (deixando o espaço do 'Realizado' em branco)
+                    linhaAtual += 2; 
                 }
             });
 
-            // 4. Rodapé e Legendas
-            pagina[21] = "-".repeat(80);
-            pagina[22] = "Chk 1: Nivel agua/oleo, pneus | Pt. In/Fi: Inicio/Fim da linha | P: Programado";
-            pagina[23] = "Desl. 1/2: Tempo ate pt/guarda| Chk 2: Org. salao/janelas      | R: Realizado ";
-            pagina[24] = "-".repeat(80);
-            
-            // 5. Assinaturas
-            pagina[25] = "Declaro para os devidos fins, que os horarios acima descritos, foram cumpridos.";
-            pagina[29] = "_______________________   ___/___/_____   _______________________";
-            pagina[30] = "ASSINATURA DO MOTORISTA       DATA        ASSINATURA DO RESP.";
-
-            // Remove acentos para a matricial não imprimir símbolos bizarros
+            // Remove acentos e junta tudo num arquivo só, pulando a página no final (\f)
             let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += paginaLimpa + "\f"; 
         });
@@ -207,7 +184,7 @@
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "impressao_matricial_padrao.txt";
+        link.download = "impressao_matricial_limpa.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
