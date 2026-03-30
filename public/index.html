@@ -42,17 +42,8 @@
     let motoristasGlobais = []; // Guarda os dados recebidos do servidor
 
     // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
+    // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
     async function processarPlanilha() {
-        motoristasGlobais = await response.json();
-            
-            // ADICIONE ESTAS 4 LINHAS:
-            if (motoristasGlobais.length === 0) {
-                alert("O Excel foi lido, mas nenhum motorista foi encontrado. Verifique o padrão da planilha.");
-                return;
-            }
-
-            renderizarVisualizacao(motoristasGlobais);
-        
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) {
             alert("Por favor, selecione um arquivo Excel primeiro.");
@@ -63,7 +54,7 @@
         formData.append("planilha", fileInput.files[0]);
 
         try {
-            // Chama a rota que criamos no TypeScript
+            // AQUI ESTÁ A VARIÁVEL RESPONSE (Ela faz o pedido pro backend)
             const response = await fetch('/processar-excel', {
                 method: 'POST',
                 body: formData
@@ -71,7 +62,16 @@
 
             if (!response.ok) throw new Error("Erro ao processar arquivo no servidor.");
 
+            // Aqui ele lê a resposta
             motoristasGlobais = await response.json();
+            
+            // A nossa trava de segurança: se a lista vier vazia, ele avisa!
+            if (motoristasGlobais.length === 0) {
+                alert("O Excel foi lido, mas nenhum motorista foi encontrado. Verifique o padrão da planilha.");
+                return;
+            }
+
+            // Desenha na tela
             renderizarVisualizacao(motoristasGlobais);
             
             // Mostra o botão de imprimir
@@ -79,10 +79,9 @@
 
         } catch (error) {
             console.error(error);
-            alert("Erro ao ler a planilha. Verifique se o servidor backend está rodando.");
+            alert("Erro ao ler a planilha. Verifique a aba Console para mais detalhes.");
         }
     }
-
     // Função 2: Desenha os dados na tela do navegador para conferência
     function renderizarVisualizacao(motoristas) {
         const divVisualizacao = document.getElementById('visualizacao');
