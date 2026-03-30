@@ -1,24 +1,42 @@
-# Usa uma imagem oficial do Node.js, versão leve (Alpine) para economizar espaço no servidor
-FROM node:20-alpine
+# ==========================================
+# ESTÁGIO 1: Build (Compilação do TypeScript)
+# ==========================================
+FROM node:20-alpine AS builder
 
-# Define o diretório de trabalho dentro do contêiner
+# Define o diretório de trabalho
 WORKDIR /usr/src/app
 
-# Copia apenas os arquivos de dependência primeiro (melhora o cache do Docker)
+# Copia os arquivos de configuração de pacotes
 COPY package*.json ./
+COPY tsconfig.json ./
 
-# Instala as dependências do projeto
+# Instala TODAS as dependências (incluindo as de desenvolvimento, como o 'typescript')
 RUN npm install
 
-# Copia o restante do código da aplicação para o contêiner
-COPY . .
+# Copia todo o código fonte da pasta src
+COPY src/ ./src/
 
-# (Opcional) Se estiver usando TypeScript, descomente a linha abaixo para compilar o código
-# RUN npm run build
+# Roda o compilador do TypeScript (gera a pasta /dist)
+RUN npm run build
 
-# Expõe a porta que a sua aplicação web vai usar (ex: 3000)
+# ==========================================
+# ESTÁGIO 2: Produção (Imagem final leve)
+# ==========================================
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+# Copia apenas o package.json
+COPY package*.json ./
+
+# Instala APENAS as dependências de produção (ignora o typescript e @types)
+RUN npm install --only=production
+
+# Copia a pasta /dist compilada que foi gerada no ESTÁGIO 1
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Expõe a porta do Express
 EXPOSE 3000
 
-# Comando para iniciar o servidor
+# Inicia o servidor rodando o arquivo JavaScript final
 CMD ["npm", "start"]
-# Se for usar o arquivo compilado do TypeScript, mude para: CMD ["node", "dist/index.js"]
