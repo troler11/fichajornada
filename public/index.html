@@ -104,23 +104,23 @@
             // ====================================================================
             
             // LINHA 0 (Onde estava a OS) - Se a OS sumir, suba o papel no rolete!
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 54); 
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 56); 
 
             // LINHA 1 (Subimos a Empresa/Nome/Data que estavam na Linha 1 para a Linha 1)
             // Mantendo os índices baixos para forçar o topo
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 21); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 45); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 73);                 
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 44); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 75);                 
 
             // LINHA 2 (Subimos Filial/Chapa/Função para a Linha 2)
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 24);                     
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 45);                   
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 79);
+            pagina[2] = inserirNaPosicao(pagina[2], "10", 10);                     
+            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 44);                   
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 74);
 
             // ====================================================================
             // AJUSTE DAS VIAGENS (Subindo também 1 linha para acompanhar o cabeçalho)
             // ====================================================================
-            let linhaAtual = 5; // Era 6, mudamos para 5 para subir ~0,4cm
+            let linhaAtual = 4; // Era 6, mudamos para 5 para subir ~0,4cm
 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 30) {
