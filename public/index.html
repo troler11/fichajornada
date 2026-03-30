@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Fichas - Matricial</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; color: #333; }
+        .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; text-align: center; }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
+        button:hover { background-color: #004494; }
+        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; }
+        .btn-success:hover { background-color: #218838; }
+        
+        /* Estilos para a visualização na tela */
+        .ficha { border: 1px solid #000; padding: 15px; margin-bottom: 20px; background: #fff; font-family: 'Courier New', Courier, monospace; font-size: 14px; }
+        .ficha-header { border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Ficha de Serviços - Impressão Matricial</h1>
+    
+    <div class="upload-area">
+        <p>Selecione a planilha Excel (.xlsx) extraída do sistema:</p>
+        <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
+        <br><br>
+        <button onclick="processarPlanilha()">1. Visualizar Dados</button>
+    </div>
+
+    <div id="visualizacao"></div>
+
+    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar Arquivo para Impressora (TXT)</button>
+</div>
+
+<script>
+    let motoristasGlobais = []; // Guarda os dados recebidos do servidor
+
+    // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
+    async function processarPlanilha() {
+        const fileInput = document.getElementById('arquivoExcel');
+        if (fileInput.files.length === 0) {
+            alert("Por favor, selecione um arquivo Excel primeiro.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("planilha", fileInput.files[0]);
+
+        try {
+            // Chama a rota que criamos no TypeScript
+            const response = await fetch('/processar-excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("Erro ao processar arquivo no servidor.");
+
+            motoristasGlobais = await response.json();
+            renderizarVisualizacao(motoristasGlobais);
+            
+            // Mostra o botão de imprimir
+            document.getElementById('btnImprimir').style.display = 'block';
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao ler a planilha. Verifique se o servidor backend está rodando.");
+        }
+    }
+
+    // Função 2: Desenha os dados na tela do navegador para conferência
+    function renderizarVisualizacao(motoristas) {
+        const divVisualizacao = document.getElementById('visualizacao');
+        divVisualizacao.innerHTML = ''; // Limpa a tela
+
+        motoristas.forEach(mot => {
+            let html = `
+                <div class="ficha">
+                    <div class="ficha-header">
+                        <strong>CHAPA:</strong> ${mot.id} &nbsp;&nbsp;&nbsp; 
+                        <strong>NOME:</strong> ${mot.nome} &nbsp;&nbsp;&nbsp; 
+                        <strong>DATA:</strong> ${mot.data}
+                    </div>
+                    <table>
+                        <tr>
+                            <th>Linha</th><th>Veículo</th><th>CheckList 1</th><th>Desloc. 1</th><th>Ponto Inic.</th>
+                        </tr>
+            `;
+            
+            mot.viagens.forEach(v => {
+                html += `
+                    <tr>
+                        <td>${v.linha || ''}</td>
+                        <td>${v.veiculo || ''}</td>
+                        <td>${v.checkList1 || ''}</td>
+                        <td>${v.deslocamento1 || ''}</td>
+                        <td>${v.pontoInicial || ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</table></div>`;
+            divVisualizacao.innerHTML += html;
+        });
+    }
+
+    // Função Auxiliar: Substitui um texto em uma posição exata (coluna) da string
+    function inserirNaPosicao(linhaBase, textoParaInserir, posicaoInicial) {
+        if (!textoParaInserir) return linhaBase;
+        const texto = String(textoParaInserir);
+        return linhaBase.substring(0, posicaoInicial) + texto + linhaBase.substring(posicaoInicial + texto.length);
+    }
+
+    // Função 3: Monta o TXT com as 33 Linhas e 80 Colunas e faz o download
+    function gerarTXT() {
+        let textoFinal = "";
+
+        motoristasGlobais.forEach(mot => {
+            // Cria uma página em branco com 33 linhas de 80 espaços cada
+            let pagina = Array(33).fill("".padEnd(80, " "));
+
+            // =========================================================
+            // AQUI VOCÊ AJUSTA AS POSIÇÕES EXATAS USANDO SUA RÉGUA!
+            // Lembrete: Arrays começam no 0. Então pagina[4] é a Linha 5.
+            // =========================================================
+            
+            // Ex: Na linha 6 (índice 5), imprime a CHAPA na coluna 10, e o NOME na coluna 25
+            pagina[5] = inserirNaPosicao(pagina[5], mot.id, 10);
+            pagina[5] = inserirNaPosicao(pagina[5], mot.nome, 25);
+            
+            // Ex: Na linha 8 (índice 7), imprime a DATA na coluna 65
+            pagina[7] = inserirNaPosicao(pagina[7], mot.data, 65);
+
+            // Preenchendo a tabela de viagens (começando da linha 12, por exemplo)
+            let linhaAtualImpressao = 11; // índice 11 é a linha 12 do papel
+            
+            mot.viagens.forEach(v => {
+                // Impede que passe de 33 linhas (se tiver muitas viagens)
+                if(linhaAtualImpressao < 30) { 
+                    // Posição de cada coluna (ajuste os números 2, 12, 25... conforme o papel)
+                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.linha, 2);
+                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.veiculo, 12);
+                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.checkList1, 25);
+                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.deslocamento1, 38);
+                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.pontoInicial, 52);
+                    
+                    linhaAtualImpressao += 2; // Pula uma linha entre uma viagem e outra, se necessário
+                }
+            });
+
+            // Junta as 33 linhas com uma quebra de linha (\n)
+            let textoPagina = pagina.join("\n");
+            
+            // Adiciona o "Form Feed" (\f) no final para a impressora ejetar até o próximo picote
+            textoFinal += textoPagina + "\f";
+        });
+
+        // Cria o arquivo e força o download
+        const blob = new Blob([textoFinal], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "fichas_impressao.txt";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
