@@ -130,62 +130,58 @@
     }
 
     // 4. Monta o TXT com as medidas exatas da régua
+    // 4. Monta o TXT com as medidas exatas da régua
     function gerarTXT() {
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Cria a folha em branco (33 linhas de altura, 80 colunas de largura)
-            let pagina = Array(33).fill("".padEnd(80, " "));
+            // AUMENTAMOS PARA 90 COLUNAS para a Data caber no canto direito!
+            let pagina = Array(33).fill("".padEnd(90, " "));
 
             // ====================================================================
-            // CABEÇALHO - Medidas Calibradas
+            // CABEÇALHO - Ajustado (+8 colunas para a direita)
+            // Lembre-se: Ajuste a margem do topo fisicamente na impressora!
             // ====================================================================
             
-            // LINHA 4 DO PAPEL (Aprox. 1,6 cm do topo) -> Índice 3 do Array
-           pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 26); // Empresa (era 18, agora 26)
-            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 48); // Nome (era 40, agora 48)
-            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 74);
+            // LINHA DE CIMA (Empresa, Nome, Data) -> Índice 0
+            pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 34); // Empresa (+8)
+            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 56); // Nome (+8)
+            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 82);                 // Data (+8)
 
-            // LINHA 5 DO PAPEL (Aprox. 2,0 cm do topo) -> Índice 4 do Array
-            pagina[1] = inserirNaPosicao(pagina[1], "10", 26);                     // Filial
-            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 48);                   // Chapa
-            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 76);
+            // LINHA DE BAIXO (Filial, Chapa, Função) -> Índice 1
+            pagina[1] = inserirNaPosicao(pagina[1], "10", 34);                     // Filial (+8)
+            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 56);                   // Chapa (+8)
+            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 82);          // Função (+8)
             
             // ====================================================================
             // HORÁRIOS DAS VIAGENS
             // ====================================================================
-            // Use sua régua para medir a distância do topo do papel até o primeiro
-            // horário impresso. Divida os cm por 2.54 e multiplique por 6. 
-            // Ex: Se o primeiro horário for 3,5 cm do topo: (3.5 / 2.54) * 6 = ~8
+            // Ajuste o 'linhaAtual' para descer as viagens se necessário
             let linhaAtual = 8; 
             
             mot.viagens.forEach(v => {
-                // Impede que a impressão passe da linha 28 e suje o rodapé
                 if(linhaAtual < 28) { 
-                    let strValores = "".padEnd(80, " ");
+                    let strValores = "".padEnd(90, " ");
                     
                     // ====================================================================
-                    // IMPORTANTE: AJUSTE OS NÚMEROS NO FINAL DE CADA LINHA ABAIXO!
-                    // Meça a distância da margem ESQUERDA até a coluna desejada.
-                    // Faça: (Centímetros / 2.54) * 10 = Coluna Exata
+                    // QUANDO FOR MEDIR AS VIAGENS, LEMBRE DE SOMAR A DIFERENÇA DA LATERAL
                     // ====================================================================
-                    strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         // Coluna Linha
-                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 12);      // Coluna Veículo
-                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 22);   // Coluna Chk 1
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 32);// Coluna Desl 1
-                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 42); // Coluna Pt Inicial
-                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 52);   // Coluna Pt Final
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 62);// Coluna Desl 2
-                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 72);   // Coluna Chk 2
+                    strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         
+                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 12);      
+                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 22);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 32);
+                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 42); 
+                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 52);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 62);
+                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 72);   
 
                     pagina[linhaAtual] = strValores;
                     
-                    // Pula 2 linhas para a próxima viagem (deixando o espaço do 'Realizado' em branco)
                     linhaAtual += 2; 
                 }
             });
 
-            // Remove acentos e junta tudo, pulando a página no final (\f)
+            // Remove acentos e junta tudo
             let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += paginaLimpa + "\f"; 
         });
