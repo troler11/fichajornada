@@ -135,53 +135,53 @@
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // AUMENTAMOS PARA 90 COLUNAS para a Data caber no canto direito!
-            let pagina = Array(33).fill("".padEnd(90, " "));
+            // TRAVADO NO TAMANHO EXATO DO PAPEL: 33 Linhas de altura, 82 Colunas de largura
+            let pagina = Array(33).fill("".padEnd(82, " "));
 
             // ====================================================================
-            // CABEÇALHO - Ajustado (+8 colunas para a direita)
-            // Lembre-se: Ajuste a margem do topo fisicamente na impressora!
+            // CABEÇALHO - Descontando a margem morta de 2.6cm da impressora
             // ====================================================================
             
-            // LINHA DE CIMA (Empresa, Nome, Data) -> Índice 0
-            pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 34); // Empresa (+8)
-            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 56); // Nome (+8)
-            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 82);                 // Data (+8)
+            // LINHA DE CIMA (Índice 0)
+            // Para cair no 4,5cm físico, usamos a coluna 7 no código
+            pagina[0] = inserirNaPosicao(pagina[0], "001 TURISMO PAVAO LTDA", 7);  
+            // Para cair no 10,2cm físico (10,2 - 2,6 = 7,6cm), usamos a coluna 30
+            pagina[0] = inserirNaPosicao(pagina[0], mot.nome.substring(0, 25), 30); 
+            // Para cair no 16,7cm físico (16,7 - 2,6 = 14,1cm), usamos a coluna 55
+            pagina[0] = inserirNaPosicao(pagina[0], mot.data, 55);                 
 
-            // LINHA DE BAIXO (Filial, Chapa, Função) -> Índice 1
-            pagina[1] = inserirNaPosicao(pagina[1], "10", 34);                     // Filial (+8)
-            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 56);                   // Chapa (+8)
-            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 82);          // Função (+8)
+            // LINHA DE BAIXO (Índice 1)
+            pagina[1] = inserirNaPosicao(pagina[1], "10", 7);                     
+            pagina[1] = inserirNaPosicao(pagina[1], mot.id, 30);                   
+            // Para cair no 17,2cm físico (17,2 - 2,6 = 14,6cm), usamos a coluna 57
+            pagina[1] = inserirNaPosicao(pagina[1], "MOTORISTA MIC", 57);          
             
             // ====================================================================
             // HORÁRIOS DAS VIAGENS
             // ====================================================================
-            // Ajuste o 'linhaAtual' para descer as viagens se necessário
-            let linhaAtual = 8; 
+            let linhaAtual = 8; // Ajuste este número para descer os horários se necessário
             
             mot.viagens.forEach(v => {
                 if(linhaAtual < 28) { 
-                    let strValores = "".padEnd(90, " ");
+                    let strValores = "".padEnd(82, " ");
                     
-                    // ====================================================================
-                    // QUANDO FOR MEDIR AS VIAGENS, LEMBRE DE SOMAR A DIFERENÇA DA LATERAL
-                    // ====================================================================
+                    // Colunas das viagens (ajuste os números no final conforme a régua, 
+                    // lembrando de descontar os 2,6 cm da impressora primeiro!)
                     strValores = inserirNaPosicao(strValores, (v.linha || "").substring(0,8), 0);         
-                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 12);      
-                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 22);   
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 32);
-                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 42); 
-                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 52);   
-                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 62);
-                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 72);   
+                    strValores = inserirNaPosicao(strValores, (v.veiculo || "").substring(0,7), 10);      
+                    strValores = inserirNaPosicao(strValores, (v.checkList1 || "").substring(0,5), 18);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento1 || "").substring(0,5), 26);
+                    strValores = inserirNaPosicao(strValores, (v.pontoInicial || "").substring(0,5), 34); 
+                    strValores = inserirNaPosicao(strValores, (v.pontoFinal || "").substring(0,5), 42);   
+                    strValores = inserirNaPosicao(strValores, (v.deslocamento2 || "").substring(0,5), 50);
+                    strValores = inserirNaPosicao(strValores, (v.checkList2 || "").substring(0,5), 58);   
 
                     pagina[linhaAtual] = strValores;
-                    
                     linhaAtual += 2; 
                 }
             });
 
-            // Remove acentos e junta tudo
+            // Remove acentos e junta tudo, incluindo o Pulo de Página (\f)
             let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += paginaLimpa + "\f"; 
         });
@@ -189,7 +189,7 @@
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "impressao_matricial_calibrada.txt";
+        link.download = "impressao_matricial_final.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
