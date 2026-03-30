@@ -86,25 +86,7 @@
     }
 
     // 4. GERAÇÃO DO ARQUIVO TXT CALIBRADO (82 colunas x 33 linhas)
-    function gerarTXT() {
-        let textoFinal = "";
-        
-        // Comando ESC/P para Fonte Condensada (Decimal 15)
-        const FONTE_CONDENSADA = String.fromCharCode(15);
-        // Comando ESC/P para Reset/Fonte Normal (Decimal 18)
-        const FONTE_NORMAL = String.fromCharCode(18);
-
-        motoristasGlobais.forEach(mot => {
-            // Criamos a página (82 colunas é o padrão normal, 
-            // mas com fonte condensada você pode chegar a 137 se precisar)
-            let pagina = Array(33).fill("".padEnd(82, " "));
-
-            // ====================================================================
-            // CABEÇALHO - SUBINDO 0,5 CM (REDUÇÃO DE LINHAS)
-            // ====================================================================
-            
-            // LINHA 0 (Onde estava a OS) - Se a OS sumir, suba o papel no rolete!
-           // ====================================================================
+    // ====================================================================
             // CABEÇALHO - AJUSTADO PARA 1,0 CM (DESCENDO 1 LINHA)
             // ====================================================================
             
@@ -127,8 +109,36 @@
             // ====================================================================
             // AJUSTE DAS VIAGENS (Descendo também para manter o espaçamento)
             // ====================================================================
-            let linhaAtual = 6; // Ajustado de 4 para 6 para descer junto com o cabeçalho
+            let linhaAtual = 6; // Ajustado de 4 para 6 para descer junto com o cabeçalhofunction gerarTXT() {
+        let textoFinal = "";
+        
+        const FONTE_CONDENSADA = String.fromCharCode(15);
+        const FONTE_NORMAL = String.fromCharCode(18);
+        // Comando para definir espaçamento de linha mínimo (n/180 polegada)
+        const ESPACAMENTO_MINIMO = String.fromCharCode(27, 51, 20); // ESC 3 20
 
+        motoristasGlobais.forEach(mot => {
+            let pagina = Array(33).fill("".padEnd(82, " "));
+
+            // ====================================================================
+            // CABEÇALHO - POSIÇÃO ZERO ABSOLUTA (Para 0,08 cm)
+            // ====================================================================
+            
+            // LINHA 0 - OS (12,5cm -> Col 56)
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 56); 
+
+            // LINHA 1 - Empresa/Nome/Data
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 44); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 75);                 
+
+            // LINHA 2 - Filial/Chapa/Função
+            pagina[2] = inserirNaPosicao(pagina[2], "10", 10);                     
+            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 44);                   
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 74);
+
+            // LINHA 4 - Início das Viagens
+            let linhaAtual = 4; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 30) {
                     let str = "".padEnd(82, " ");
@@ -145,16 +155,15 @@
                 }
             });
 
-            // Adiciona o comando de fonte condensada no INÍCIO da página
-            // e o comando de reset/pulo de página no FINAL
-            let conteudoPagina = FONTE_CONDENSADA + pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Adicionamos o comando de espaçamento mínimo no início
+            let conteudoPagina = ESPACAMENTO_MINIMO + FONTE_CONDENSADA + pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += conteudoPagina + FONTE_NORMAL + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_fonte_pequena.txt";
+        link.download = "ficha_ajuste_topo.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
