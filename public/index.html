@@ -99,26 +99,29 @@
             // mas com fonte condensada você pode chegar a 137 se precisar)
             let pagina = Array(33).fill("".padEnd(82, " "));
 
-            // --- CABEÇALHO ---
             // ====================================================================
-            // CABEÇALHO - SEM ZONA MORTA (MEDIDA DIRETA DA RÉGUA)
+            // CABEÇALHO - SUBINDO 0,5 CM (REDUÇÃO DE LINHAS)
             // ====================================================================
             
-            // LINHA 1 (Topo)
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 53); // 12,5cm -> Col 49
+            // LINHA 0 (Onde estava a OS) - Se a OS sumir, suba o papel no rolete!
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 54); 
 
-            // LINHA 2 (1,4cm - 1,5cm)
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 18); // 4,5cm -> Col 18
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 45); // 10,4cm -> Col 41
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 73);                  // 17,0cm -> Col 67
+            // LINHA 1 (Subimos a Empresa/Nome/Data que estavam na Linha 1 para a Linha 1)
+            // Mantendo os índices baixos para forçar o topo
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 21); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 45); 
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 73);                 
 
-            // LINHA 3 (1,8cm)
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 14);                      // Filial 4,5cm
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 45);                    // Chapa 10,4cm
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 67);           // Função 17,0cm
+            // LINHA 2 (Subimos Filial/Chapa/Função para a Linha 2)
+            pagina[2] = inserirNaPosicao(pagina[2], "10", 24);                     
+            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 45);                   
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 79);
 
-            // --- VIAGENS ---
-            let linhaAtual = 6;
+            // ====================================================================
+            // AJUSTE DAS VIAGENS (Subindo também 1 linha para acompanhar o cabeçalho)
+            // ====================================================================
+            let linhaAtual = 5; // Era 6, mudamos para 5 para subir ~0,4cm
+
             mot.viagens.forEach(v => {
                 if(linhaAtual < 30) {
                     let str = "".padEnd(82, " ");
