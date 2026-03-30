@@ -43,6 +43,16 @@
 
     // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
     async function processarPlanilha() {
+        motoristasGlobais = await response.json();
+            
+            // ADICIONE ESTAS 4 LINHAS:
+            if (motoristasGlobais.length === 0) {
+                alert("O Excel foi lido, mas nenhum motorista foi encontrado. Verifique o padrão da planilha.");
+                return;
+            }
+
+            renderizarVisualizacao(motoristasGlobais);
+        
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) {
             alert("Por favor, selecione um arquivo Excel primeiro.");
