@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Fichas - Matricial</title>
+    <title>Ficha de Serviços - Matricial</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { font-size: 24px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { font-size: 22px; color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
         .upload-area { margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; text-align: center; }
         button { padding: 10px 15px; font-size: 16px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
         button:hover { background-color: #004494; }
-        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; }
+        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
         .btn-success:hover { background-color: #218838; }
         
-        /* Estilos para a visualização na tela */
-        .ficha { border: 1px solid #000; padding: 15px; margin-bottom: 20px; background: #fff; font-family: 'Courier New', Courier, monospace; font-size: 14px; }
-        .ficha-header { border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 5px; text-align: center; font-size: 12px; }
+        /* Simulação do PDF na tela */
+        .ficha { border: 2px solid #000; padding: 10px; margin-bottom: 30px; background: #fff; font-family: monospace; font-size: 13px; text-transform: uppercase; }
+        .header-ficha { text-align: center; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .dados-motorista { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; text-align: center; }
+        th, td { border: 1px solid #000; padding: 4px; }
+        th { background-color: #f0f0f0; }
+        .linha-realizado { height: 20px; background-color: #fafafa; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Ficha de Serviços - Impressão Matricial</h1>
+    <h1>Emissor de Ficha de Serviços (Portaria nº 3.626)</h1>
     
     <div class="upload-area">
-        <p>Selecione a planilha Excel (.xlsx) extraída do sistema:</p>
+        <p>Selecione a planilha Excel (.xlsx):</p>
         <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
         <br><br>
-        <button onclick="processarPlanilha()">1. Visualizar Dados</button>
+        <button onclick="processarPlanilha()">1. Visualizar e Processar Dados</button>
     </div>
 
     <div id="visualizacao"></div>
 
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar Arquivo para Impressora (TXT)</button>
+    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Baixar Arquivo TXT para Matricial</button>
 </div>
 
 <script>
-    let motoristasGlobais = []; // Guarda os dados recebidos do servidor
+    let motoristasGlobais = [];
 
-    // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
-    // Função 1: Envia o Excel para o Backend (TypeScript) e mostra na tela
     async function processarPlanilha() {
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) {
@@ -54,65 +55,68 @@
         formData.append("planilha", fileInput.files[0]);
 
         try {
-            // AQUI ESTÁ A VARIÁVEL RESPONSE (Ela faz o pedido pro backend)
-            const response = await fetch('/processar-excel', {
-                method: 'POST',
-                body: formData
-            });
-
+            const response = await fetch('/processar-excel', { method: 'POST', body: formData });
             if (!response.ok) throw new Error("Erro ao processar arquivo no servidor.");
 
-            // Aqui ele lê a resposta
             motoristasGlobais = await response.json();
             
-            // A nossa trava de segurança: se a lista vier vazia, ele avisa!
             if (motoristasGlobais.length === 0) {
                 alert("O Excel foi lido, mas nenhum motorista foi encontrado. Verifique o padrão da planilha.");
                 return;
             }
 
-            // Desenha na tela
             renderizarVisualizacao(motoristasGlobais);
-            
-            // Mostra o botão de imprimir
             document.getElementById('btnImprimir').style.display = 'block';
 
         } catch (error) {
             console.error(error);
-            alert("Erro ao ler a planilha. Verifique a aba Console para mais detalhes.");
+            alert("Erro ao ler a planilha. O servidor backend está rodando?");
         }
     }
-    // Função 2: Desenha os dados na tela do navegador para conferência
+
     function renderizarVisualizacao(motoristas) {
         const divVisualizacao = document.getElementById('visualizacao');
-        divVisualizacao.innerHTML = ''; // Limpa a tela
+        divVisualizacao.innerHTML = ''; 
 
         motoristas.forEach(mot => {
             let html = `
                 <div class="ficha">
-                    <div class="ficha-header">
-                        <strong>CHAPA:</strong> ${mot.id} &nbsp;&nbsp;&nbsp; 
-                        <strong>NOME:</strong> ${mot.nome} &nbsp;&nbsp;&nbsp; 
-                        <strong>DATA:</strong> ${mot.data}
+                    <div class="header-ficha">Ficha de serviços de acordo com a portaria nº 3.626 de 13/11/1991</div>
+                    <div class="dados-motorista">
+                        <div>
+                            <strong>EMPRESA:</strong> 001 TURISMO PAVAO LTDA<br>
+                            <strong>NOME:</strong> ${mot.id} - ${mot.nome}<br>
+                            <strong>CHAPA:</strong> ${mot.id}
+                        </div>
+                        <div style="text-align: right;">
+                            <strong>DATA:</strong> ${mot.data}<br>
+                            <strong>FUNÇÃO:</strong> MOTORISTA MIC
+                        </div>
                     </div>
                     <table>
                         <tr>
-                            <th>Linha</th><th>Veículo</th><th>Check 1</th><th>Desloc. 1</th>
-                            <th>Pt. Inicial</th><th>Pt. Final</th><th>Desloc. 2</th><th>Check 2</th>
+                            <th>LINHA</th><th>VEÍCULO</th><th>P/R</th><th>CHK 1</th><th>DES 1</th>
+                            <th>PT INICIAL</th><th>PT FINAL</th><th>DES 2</th><th>CHK 2</th>
                         </tr>
             `;
             
             mot.viagens.forEach(v => {
+                // Linha do Programado
                 html += `
                     <tr>
                         <td>${v.linha || ''}</td>
                         <td>${v.veiculo || ''}</td>
+                        <td><strong>P</strong></td>
                         <td>${v.checkList1 || ''}</td>
                         <td>${v.deslocamento1 || ''}</td>
                         <td>${v.pontoInicial || ''}</td>
                         <td>${v.pontoFinal || ''}</td>
                         <td>${v.deslocamento2 || ''}</td>
                         <td>${v.checkList2 || ''}</td>
+                    </tr>
+                    <tr class="linha-realizado">
+                        <td></td><td></td><td><strong>R</strong></td>
+                        <td></td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
                 `;
             });
@@ -122,62 +126,88 @@
         });
     }
 
-    // Função Auxiliar: Substitui um texto em uma posição exata (coluna) da string
     function inserirNaPosicao(linhaBase, textoParaInserir, posicaoInicial) {
         if (!textoParaInserir) return linhaBase;
-        const texto = String(textoParaInserir);
+        const texto = String(textoParaInserir).toUpperCase();
         return linhaBase.substring(0, posicaoInicial) + texto + linhaBase.substring(posicaoInicial + texto.length);
     }
 
-    // Função 3: Monta o TXT com as 33 Linhas e 80 Colunas e faz o download
+    // A MÁGICA ACONTECE AQUI: Montando as colunas e linhas para a impressora
     function gerarTXT() {
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Cria uma página em branco com 33 linhas de 80 espaços cada
             let pagina = Array(33).fill("".padEnd(80, " "));
 
-            // =========================================================
-            // AQUI VOCÊ AJUSTA AS POSIÇÕES EXATAS USANDO SUA RÉGUA!
-            // Lembrete: Arrays começam no 0. Então pagina[4] é a Linha 5.
-            // =========================================================
+            // 1. Cabeçalho
+            pagina[0] = "-".repeat(80);
+            pagina[1] = inserirNaPosicao(pagina[1], "Ficha de servicos conf. portaria n. 3.626 de 13/11/1991", 10);
+            pagina[2] = inserirNaPosicao(pagina[2], "EMPRESA: 001 TURISMO PAVAO LTDA", 0);
+            pagina[3] = inserirNaPosicao(pagina[3], `NOME: ${mot.id} - ${mot.nome.substring(0, 30)}`, 0);
+            pagina[3] = inserirNaPosicao(pagina[3], `DATA: ${mot.data}`, 60);
+            pagina[4] = inserirNaPosicao(pagina[4], `CHAPA: ${mot.id}`, 0);
+            pagina[4] = inserirNaPosicao(pagina[4], `FUNCAO: MOTORISTA MIC`, 60);
             
-            // Ex: Na linha 6 (índice 5), imprime a CHAPA na coluna 10, e o NOME na coluna 25
-            pagina[5] = inserirNaPosicao(pagina[5], mot.id, 10);
-            pagina[5] = inserirNaPosicao(pagina[5], mot.nome, 25);
-            
-            // Ex: Na linha 8 (índice 7), imprime a DATA na coluna 65
-            pagina[7] = inserirNaPosicao(pagina[7], mot.data, 65);
+            // 2. Títulos das Colunas (Limitado a 80 caracteres)
+            pagina[5] = "-".repeat(80);
+            pagina[6] = "LINHA   |VEICULO|P|CHK 1|DES 1|PT.IN|PT.FI|DES 2|CHK 2|LARG.|ENT/INI|REALIZ.";
+            pagina[7] = "-".repeat(80);
 
-            // Preenchendo a tabela de viagens (começando da linha 12, por exemplo)
-            let linhaAtualImpressao = 11; // índice 11 é a linha 12 do papel
-            
+            // 3. Loop das Viagens
+            let linhaAtual = 8;
             mot.viagens.forEach(v => {
-                // Impede que passe de 33 linhas (se tiver muitas viagens)
-                if(linhaAtualImpressao < 30) { 
-                    // Posição de cada coluna (ajuste os números 2, 12, 25... conforme o papel)
-                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.linha, 2);
-                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.veiculo, 12);
-                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.checkList1, 25);
-                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.deslocamento1, 38);
-                    pagina[linhaAtualImpressao] = inserirNaPosicao(pagina[linhaAtualImpressao], v.pontoInicial, 52);
-                    
-                    linhaAtualImpressao += 2; // Pula uma linha entre uma viagem e outra, se necessário
+                if(linhaAtual < 20) { 
+                    // Linha P (Programado)
+                    let strP = "".padEnd(80, " ");
+                    strP = inserirNaPosicao(strP, (v.linha || "").substring(0,8), 0);
+                    strP = inserirNaPosicao(strP, "|", 8);
+                    strP = inserirNaPosicao(strP, (v.veiculo || "").substring(0,7), 9);
+                    strP = inserirNaPosicao(strP, "|P|", 16);
+                    strP = inserirNaPosicao(strP, (v.checkList1 || "").substring(0,5), 19);
+                    strP = inserirNaPosicao(strP, "|", 24);
+                    strP = inserirNaPosicao(strP, (v.deslocamento1 || "").substring(0,5), 25);
+                    strP = inserirNaPosicao(strP, "|", 30);
+                    strP = inserirNaPosicao(strP, (v.pontoInicial || "").substring(0,5), 31);
+                    strP = inserirNaPosicao(strP, "|", 36);
+                    strP = inserirNaPosicao(strP, (v.pontoFinal || "").substring(0,5), 37);
+                    strP = inserirNaPosicao(strP, "|", 42);
+                    strP = inserirNaPosicao(strP, (v.deslocamento2 || "").substring(0,5), 43);
+                    strP = inserirNaPosicao(strP, "|", 48);
+                    strP = inserirNaPosicao(strP, (v.checkList2 || "").substring(0,5), 49);
+                    strP = inserirNaPosicao(strP, "|", 54);
+                    // Colunas que não mapeamos no backend, deixamos espaço para preencher a caneta
+                    strP = inserirNaPosicao(strP, "     |       |", 55); 
+
+                    // Linha R (Realizado)
+                    let strR = "".padEnd(80, " ");
+                    strR = inserirNaPosicao(strR, "        |       |R|     |     |     |     |     |     |     |       |", 0);
+
+                    pagina[linhaAtual] = strP;
+                    pagina[linhaAtual+1] = strR;
+                    linhaAtual += 2;
                 }
             });
 
-            // Junta as 33 linhas com uma quebra de linha (\n)
-            let textoPagina = pagina.join("\n");
+            // 4. Rodapé e Legendas
+            pagina[21] = "-".repeat(80);
+            pagina[22] = "Chk 1: Nivel agua/oleo, pneus | Pt. In/Fi: Inicio/Fim da linha | P: Programado";
+            pagina[23] = "Desl. 1/2: Tempo ate pt/guarda| Chk 2: Org. salao/janelas      | R: Realizado ";
+            pagina[24] = "-".repeat(80);
             
-            // Adiciona o "Form Feed" (\f) no final para a impressora ejetar até o próximo picote
-            textoFinal += textoPagina + "\f";
+            // 5. Assinaturas
+            pagina[25] = "Declaro para os devidos fins, que os horarios acima descritos, foram cumpridos.";
+            pagina[29] = "_______________________   ___/___/_____   _______________________";
+            pagina[30] = "ASSINATURA DO MOTORISTA       DATA        ASSINATURA DO RESP.";
+
+            // Remove acentos para a matricial não imprimir símbolos bizarros
+            let paginaLimpa = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            textoFinal += paginaLimpa + "\f"; 
         });
 
-        // Cria o arquivo e força o download
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "fichas_impressao.txt";
+        link.download = "impressao_matricial_padrao.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
