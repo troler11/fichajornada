@@ -25,38 +25,46 @@ app.post('/processar-excel', upload.single('planilha'), async (req: Request, res
         let motoristaAtual: any = null;
 
         worksheet.eachRow((row, rowNumber) => {
-            const colG = row.getCell(7).text; // Coluna G (Nome ou ID)
-            const colK = row.getCell(11).text; // Coluna K (Data)
-            const colB = row.getCell(2).text; // Coluna B (Linha)
+            // Função mais robusta para ler o valor da célula, não importa a formatação
+            const lerCelula = (num: number) => {
+                const celula = row.getCell(num);
+                return celula.value ? celula.value.toString().trim() : '';
+            };
+
+            const colG = lerCelula(7);  // Coluna G (Nome ou ID)
+            const colK = lerCelula(11); // Coluna K (Data)
+            const colB = lerCelula(2);  // Coluna B (Linha/Código)
 
             // REGRA 1: Detectar se é uma linha de Cabeçalho de Motorista
-            if (colG.includes(' - ') && colK !== '') {
-                // Se já tínhamos um motorista sendo processado, salva ele na lista
+            // Agora procura pelo hífen, mesmo se os espaços ao redor estiverem diferentes
+            if (colG.includes('-') && colK !== '') {
                 if (motoristaAtual) motoristas.push(motoristaAtual);
                 
-                const [id, nome] = colG.split(' - ');
+                // Divide "000204 - FRANCLIN GAMA" separando o ID do Nome
+                const partes = colG.split('-');
                 motoristaAtual = {
-                    id: id.trim(),
-                    nome: nome.trim(),
-                    data: colK.trim(),
+                    id: partes[0].trim(),
+                    nome: partes.slice(1).join('-').trim(), // Pega tudo depois do primeiro hífen
+                    data: colK,
                     viagens: []
                 };
             }
-            // REGRA 2: Detectar se é uma linha de Viagem Programada (tem a Linha na Col B)
-            else if (motoristaAtual && colB !== '' && rowNumber > 3) {
+            // REGRA 2: Detectar se é uma linha de Viagem Programada (tem dados na Coluna B)
+            else if (motoristaAtual && colB !== '' && rowNumber > 1) {
+                // Para não pegar as linhas de "Realizado" (que não tem a linha preenchida igual)
+                // Se a sua linha "Realizado" também tiver a coluna B preenchida, me avise!
                 const viagem = {
                     linha: colB,
-                    veiculo: row.getCell(3).text, // Col C
-                    checkList1: row.getCell(4).text, // Col D (Ajuste conforme sua planilha)
-                    deslocamento1: row.getCell(5).text, // Col E
-                    pontoInicial: row.getCell(6).text, // Col F
-                    // ... mapear o restante das colunas ...
+                    veiculo: lerCelula(3),       // Col C
+                    checkList1: lerCelula(4),    // Col D
+                    deslocamento1: lerCelula(5), // Col E
+                    pontoInicial: lerCelula(6)   // Col F
                 };
+                
                 motoristaAtual.viagens.push(viagem);
             }
         });
 
-        // Adiciona o último motorista lido à lista
         if (motoristaAtual) motoristas.push(motoristaAtual);
 
         // Devolve os dados em JSON para a tela do site!
