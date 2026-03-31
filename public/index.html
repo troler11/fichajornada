@@ -2,26 +2,25 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Calibração 0,8cm e 17,5cm</title>
+    <title>Emissor Pavao - Calibração Final LX-350</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        button { padding: 12px 20px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; width: 100%; font-weight: bold; }
         .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #0056b3; text-align: center; }
-        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
-        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Emissor de Ficha de Serviços</h1>
+    <h1>Emissor de Ficha de Serviços - PAVAO</h1>
     <div class="upload-area">
         <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
         <br><br>
         <button onclick="processarPlanilha()">1. Carregar Dados</button>
     </div>
     <div id="visualizacao"></div>
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar TXT</button>
+    <button id="btnImprimir" style="display:none; background-color: #28a745;" onclick="gerarTXT()">2. Gerar TXT (Ajustado)</button>
 </div>
 
 <script>
@@ -36,17 +35,15 @@
             const response = await fetch('/processar-excel', { method: 'POST', body: formData });
             motoristasGlobais = await response.json();
             if (motoristasGlobais.length > 0) {
-                document.getElementById('visualizacao').innerHTML = `<p style="color:green">✔ ${motoristasGlobais.length} carregados.</p>`;
+                document.getElementById('visualizacao').innerHTML = `<p style="color:green; text-align:center;">✔ ${motoristasGlobais.length} motoristas carregados.</p>`;
                 document.getElementById('btnImprimir').style.display = 'block';
             }
         } catch (e) { alert("Erro ao carregar dados."); }
     }
 
-    // Função ajustada para aceitar colunas além do limite inicial
     function inserirNaPosicao(linhaBase, texto, pos) {
         if (!texto) return linhaBase;
         const txt = String(texto).toUpperCase();
-        // Se a posição for maior que a linha atual, aumenta a linha
         if (pos + txt.length > linhaBase.length) {
             linhaBase = linhaBase.padEnd(pos + txt.length, " ");
         }
@@ -57,43 +54,45 @@
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Criamos a folha com margem estendida para a LX-350 não cortar o fim da linha
-            let pagina = Array(33).fill("".padEnd(120, " "));
+            // Criamos uma linha larga (130 colunas) para evitar cortes do Windows
+            let pagina = Array(33).fill("".padEnd(130, " "));
 
-            // --- CABEÇALHO ---
-            // OS: Para 12,5cm (Aumentado para compensar recuo)
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 72); 
+            // --- CABEÇALHO (Ajustado para Fonte 12 CPI / Elite) ---
+            
+            // OS: Alvo 12,5cm -> Coluna 60
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 60); 
 
-            // --- LINHA 2 ---
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 16); // Puxado -2 colunas para 0,8cm
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 52); // Alvo 10,2cm
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 102);                 // Aumentado para chegar nos 17,5cm
+            // LINHA 2 (1,5cm topo)
+            // Empresa: Alvo 4,5cm -> Coluna 12
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 12); 
+            // Nome: Alvo 10,2cm -> Coluna 40
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 40); 
+            // Data: Alvo 17,5cm -> Coluna 82 (Aqui ele vai chegar no fim da folha!)
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 82);                 
 
-            // --- LINHA 3 ---
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 16);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 52);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 102);          
+            // LINHA 3 (1,8cm topo)
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 12);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 40);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 82);          
 
-            // --- VIAGENS ---
+            // --- VIAGENS (Início 0,8cm da esquerda na Coluna 2) ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
-                    let str = "".padEnd(120, " ");
-                    // Começando na posição 0 para o 0,8cm (Depende da margem do Bloco de Notas)
-                    str = inserirNaPosicao(str, (v.linha || ""), 0); 
-                    str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 23);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 32);
-                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 42);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 51);
-                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
-                    str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
+                    let str = "".padEnd(130, " ");
+                    str = inserirNaPosicao(str, (v.linha || ""), 2); 
+                    str = inserirNaPosicao(str, (v.veiculo || ""), 12);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 25);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 35);
+                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 46);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 58);
+                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 70);
+                    str = inserirNaPosicao(str, (v.checkList2 || ""), 82);
                     pagina[linhaAtual] = str;
                     linhaAtual += 2;
                 }
             });
 
-            // Une as linhas e remove acentos
             let limpo = pagina.map(l => l.trimEnd()).join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += limpo + "\f"; 
         });
@@ -101,7 +100,7 @@
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_ajuste_fino.txt";
+        link.download = "ficha_ajuste_final_pavao.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
