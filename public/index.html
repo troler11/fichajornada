@@ -60,28 +60,28 @@
             // --- CABEÇALHO (Ajustado para Fonte 12 CPI / Elite) ---
             
             // OS: Alvo 12,5cm -> Coluna 60
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 60); 
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 62); 
 
             // LINHA 2 (1,5cm topo)
             // Empresa: Alvo 4,5cm -> Coluna 12
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 12); 
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 16); 
             // Nome: Alvo 10,2cm -> Coluna 40
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 40); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 45); 
             // Data: Alvo 17,5cm -> Coluna 82 (Aqui ele vai chegar no fim da folha!)
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 82);                 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 90);                 
 
             // LINHA 3 (1,8cm topo)
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 12);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 40);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 82);          
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 16);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 45);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 90);          
 
             // --- VIAGENS (Início 0,8cm da esquerda na Coluna 2) ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
                     let str = "".padEnd(130, " ");
-                    str = inserirNaPosicao(str, (v.linha || ""), 2); 
-                    str = inserirNaPosicao(str, (v.veiculo || ""), 12);
+                    str = inserirNaPosicao(str, (v.linha || ""), 0); 
+                    str = inserirNaPosicao(str, (v.veiculo || ""), 10);
                     str = inserirNaPosicao(str, (v.checkList1 || ""), 25);
                     str = inserirNaPosicao(str, (v.deslocamento1 || ""), 35);
                     str = inserirNaPosicao(str, (v.pontoInicial || ""), 46);
