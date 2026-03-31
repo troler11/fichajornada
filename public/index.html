@@ -2,26 +2,29 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Final</title>
+    <title>Emissor Pavao - Epson LX-350</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #0056b3; text-align: center; }
-        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
-        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .upload-area { margin: 20px 0; padding: 30px; border: 2px dashed #0056b3; text-align: center; border-radius: 5px; }
+        button { padding: 12px 20px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background-color: #003d7a; }
+        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; }
+        #status { margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Emissor de Ficha de Serviços</h1>
+    <h1>Ficha de Serviço - Epson LX-350</h1>
     <div class="upload-area">
+        <p>Selecione a planilha do motorista:</p>
         <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
         <br><br>
-        <button onclick="processarPlanilha()">1. Carregar Dados</button>
+        <button onclick="processarPlanilha()">1. Carregar Planilha</button>
+        <div id="status"></div>
     </div>
-    <div id="visualizacao"></div>
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar TXT</button>
+    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar Arquivo para LX-350</button>
 </div>
 
 <script>
@@ -30,16 +33,18 @@
     async function processarPlanilha() {
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) { alert("Selecione um arquivo!"); return; }
+        
         const formData = new FormData();
         formData.append("planilha", fileInput.files[0]);
+
         try {
             const response = await fetch('/processar-excel', { method: 'POST', body: formData });
             motoristasGlobais = await response.json();
             if (motoristasGlobais.length > 0) {
-                document.getElementById('visualizacao').innerHTML = `<p style="color:green">✔ ${motoristasGlobais.length} carregados.</p>`;
+                document.getElementById('status').innerHTML = `<span style="color:green">✔ ${motoristasGlobais.length} motoristas prontos!</span>`;
                 document.getElementById('btnImprimir').style.display = 'block';
             }
-        } catch (e) { alert("Erro ao carregar dados."); }
+        } catch (e) { alert("Erro ao conectar com o servidor."); }
     }
 
     function inserirNaPosicao(linhaBase, texto, pos) {
@@ -51,24 +56,33 @@
     function gerarTXT() {
         let textoFinal = "";
 
+        // COMANDOS NATIVOS EPSON LX-350 (ESC/P)
+        const ESC = String.fromCharCode(27);
+        const RESET = ESC + "@";              // Reseta a impressora
+        const FONT_PICA = ESC + "P";          // Seleciona Fonte 10 CPI (Pica)
+        const LPI_6 = ESC + "2";              // Define espaçamento de 6 linhas por polegada
+        const CANCEL_CONDENSED = String.fromCharCode(18); // Garante que a fonte não esteja "espremida"
+
         motoristasGlobais.forEach(mot => {
-            // Criamos a folha (33 linhas por 82 colunas)
+            // Papel de 14cm altura (33 linhas) x 21cm largura (80 colunas na Fonte 10)
             let pagina = Array(33).fill("".padEnd(80, " "));
 
-            // --- LINHA 1 ---
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 55); 
+            // --- CABEÇALHO (Medidas exatas para Fonte 10) ---
+            
+            // LINHA 1 (1cm do topo)
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 49); 
 
-            // --- LINHA 2 ---
+            // LINHA 2 (1,5cm do topo)
             pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 18); 
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 50); // 10,2cm -> Col 40
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 77);                  // 17,5cm -> Col 69
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 40); // Alvo: 10,2cm -> Col 40
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 69);                  // Alvo: 17,5cm -> Col 69
 
-            // --- LINHA 3 ---
+            // LINHA 3 (1,8cm do topo)
             pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 50);                   // 10,2cm -> Col 40
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 77);           // 17,5cm -> Col 69
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 40);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 69);
 
-            // --- VIAGENS ---
+            // --- VIAGENS (Início em 2,7cm do topo) ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
@@ -82,19 +96,19 @@
                     str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
                     str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
                     pagina[linhaAtual] = str;
-                    linhaAtual += 2;
+                    linhaAtual += 2; // Espaço para o "Realizado"
                 }
             });
 
-            // Une as linhas e adiciona quebra de página
-            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            textoFinal += limpo + "\f"; 
+            // Montagem: Comandos + Texto + Pulo de Página (\f)
+            let conteudoPagina = RESET + FONT_PICA + LPI_6 + CANCEL_CONDENSED + pagina.join("\n");
+            textoFinal += conteudoPagina.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_final.txt";
+        link.download = "ficha_lx350.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
