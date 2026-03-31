@@ -55,11 +55,21 @@
         .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
 
         /* --- NA HORA DE IMPRIMIR --- */
-        @media print {
+       @media print {
             body { background: white; margin: 0; padding: 0; }
             .controles, #painelCoordenadas { display: none !important; } 
             .campo:hover { background-color: transparent; outline: none; }
-            .folha { background-image: none !important; box-shadow: none; margin: 0; page-break-after: always; }
+            
+            .folha { 
+                background-image: none !important; 
+                box-shadow: none; 
+                
+                /* O SEGREDO AQUI: Puxa o conteúdo de volta para a esquerda na marra */
+                margin-left: -2.3cm !important; 
+                
+                page-break-after: always; 
+            }
+            
             @page { size: 24cm 14cm; margin: 0; }
         }
     </style>
