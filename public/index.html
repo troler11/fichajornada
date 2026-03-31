@@ -48,22 +48,37 @@
         .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
 
         /* --- NA HORA DE IMPRIMIR --- */
+      /* --- NA HORA DE IMPRIMIR --- */
         @media print {
             body { background: white; margin: 0; padding: 0; }
             .controles, #painelCoordenadas { display: none !important; } 
             .campo:hover { background-color: transparent; outline: none; }
             
+            @page { 
+                size: 24cm 14cm; 
+                margin: 0; 
+            }
+
             .folha { 
                 background-image: none !important; 
                 box-shadow: none; 
                 
-                /* SEUS AJUSTES DE CALIBRAÇÃO FINA */
-                margin-left: -2.4cm !important; 
-                margin-top: 0.24cm !important;  
+                /* FIX: Zera as margens para não estourar os 14cm do @page */
+                margin: 0 !important; 
+                padding: 0 !important;
                 
+                /* SEUS AJUSTES DE CALIBRAÇÃO FINA (X, Y) */
+                /* O transform move o visual sem alterar o tamanho do bloco! */
+                transform: translate(-2.4cm, 0.24cm); 
+                
+                page-break-inside: avoid;
                 page-break-after: always; 
             }
-            @page { size: 24cm 14cm; margin: 0; }
+
+            /* Evita que a última folha gere uma página extra no final do PDF */
+            .folha:last-child {
+                page-break-after: auto;
+            }
         }
     </style>
 </head>
