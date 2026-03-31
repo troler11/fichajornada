@@ -2,109 +2,138 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Fonte 9 (Mais Espaço)</title>
+    <title>Emissor Pavao - Modo Visual</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #0056b3; text-align: center; }
-        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
-        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
+        /* --- ESTILOS DA TELA (VISUALIZAÇÃO) --- */
+        body { font-family: Arial, sans-serif; background-color: #555; margin: 0; padding: 20px; text-align: center; }
+        .controles { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: inline-block; text-align: left;}
+        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        .btn-success { background-color: #28a745; margin-left: 10px; display: none; }
+
+        /* --- A FOLHA DE PAPEL VIRTUAL --- */
+        .folha {
+            /* Tamanho exato da área útil sem furos */
+            width: 21cm; 
+            height: 14cm; 
+            
+            /* Coloque aqui a imagem escaneada do seu formulário para ajudar a alinhar! */
+            background-image: url('fundo.jpg'); 
+            background-size: 21cm 14cm;
+            background-repeat: no-repeat;
+            
+            background-color: white;
+            margin: 0 auto 20px auto;
+            position: relative; /* Permite posicionar itens soltos aqui dentro */
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        /* --- OS TEXTOS (POSIÇÃO ABSOLUTA) --- */
+        .campo {
+            position: absolute;
+            font-family: 'Courier New', Courier, monospace; /* Fonte quadradinha padrão */
+            font-size: 10pt; /* Tamanho 10! */
+            font-weight: bold;
+            color: black;
+            white-space: pre;
+            /* background-color: rgba(255, 255, 0, 0.3); Descomente para ver o fundo amarelo e ajustar melhor */
+        }
+
+        /* --- CONFIGURAÇÕES PARA A HORA DE IMPRIMIR --- */
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            .controles { display: none !important; } /* Esconde os botões */
+            
+            .folha {
+                background-image: none !important; /* Esconde a foto do formulário! */
+                box-shadow: none;
+                margin: 0;
+                page-break-after: always; /* Pula de página para cada motorista */
+            }
+
+            /* Configura a impressora para usar o papel exato e zerar margens */
+            @page {
+                size: 21cm 14cm; /* Tamanho útil da LX-350 */
+                margin: 0; /* Tira as margens do navegador */
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Emissor de Ficha de Serviços (Fonte 9)</h1>
-    <div class="upload-area">
-        <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
-        <br><br>
-        <button onclick="processarPlanilha()">1. Carregar Dados</button>
-    </div>
-    <div id="visualizacao"></div>
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar TXT</button>
+<div class="controles">
+    <h2>Ficha de Serviço - Modo Visual</h2>
+    <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
+    <button onclick="processarPlanilha()">1. Carregar Dados</button>
+    <button id="btnImprimir" class="btn-success" onclick="window.print()">2. Imprimir Direto</button>
 </div>
+
+<div id="areaImpressao"></div>
 
 <script>
     let motoristasGlobais = [];
 
+    // Finge uma resposta do servidor para testes (já que não tenho seu backend)
+    // No seu código real, mantenha o seu fetch('/processar-excel')
     async function processarPlanilha() {
-        const fileInput = document.getElementById('arquivoExcel');
-        if (fileInput.files.length === 0) { alert("Selecione um arquivo!"); return; }
-        const formData = new FormData();
-        formData.append("planilha", fileInput.files[0]);
-        try {
-            const response = await fetch('/processar-excel', { method: 'POST', body: formData });
-            motoristasGlobais = await response.json();
-            if (motoristasGlobais.length > 0) {
-                document.getElementById('visualizacao').innerHTML = `<p style="color:green">✔ ${motoristasGlobais.length} carregados.</p>`;
-                document.getElementById('btnImprimir').style.display = 'block';
-            }
-        } catch (e) { alert("Erro ao carregar dados."); }
+        // ... (MANTENHA AQUI O SEU CÓDIGO DE LER O EXCEL) ...
+        // Simulando dados para o exemplo:
+        motoristasGlobais = [{
+            nome: "LUCAS BUENO DA SILVA JUNIOR", data: "31/03/2026", id: "98765",
+            viagens: [
+                {linha: "LINHA A", veiculo: "V-100", checkList1: "08:00", pontoInicial: "08:30", pontoFinal: "09:00", checkList2: "09:15"},
+                {linha: "LINHA B", veiculo: "V-200", checkList1: "10:00", pontoInicial: "10:30", pontoFinal: "11:00", checkList2: "11:15"}
+            ]
+        }];
+
+        gerarTelasVisuais();
+        document.getElementById('btnImprimir').style.display = 'inline-block';
     }
 
-    // Função melhorada: Se a coluna passar do limite, ela aumenta a linha sozinha
-    function inserirNaPosicao(linhaBase, texto, pos) {
-        if (!texto) return linhaBase;
-        const txt = String(texto).toUpperCase();
-        if (pos + txt.length > linhaBase.length) {
-            linhaBase = linhaBase.padEnd(pos + txt.length, " ");
-        }
-        return linhaBase.substring(0, pos) + txt + linhaBase.substring(pos + txt.length);
-    }
-
-    function gerarTXT() {
-        let textoFinal = "";
+    function gerarTelasVisuais() {
+        const area = document.getElementById('areaImpressao');
+        area.innerHTML = ""; // Limpa a tela
 
         motoristasGlobais.forEach(mot => {
-            // AUMENTAMOS O LIMITE: Agora a linha tem 130 espaços!
-            let pagina = Array(33).fill("".padEnd(130, " "));
+            let htmlFolha = `<div class="folha">`;
 
-            // --- CABEÇALHO (Valores espichados para a fonte menor) ---
-            
+            // ==========================================================
+            // A MÁGICA AQUI: POSIÇÕES EM CENTÍMETROS!
+            // Basta mudar o top (cima para baixo) e o left (esquerda para direita)
+            // ==========================================================
+
             // LINHA 1
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 63); // Estava 65
+            htmlFolha += `<div class="campo" style="top: 1.0cm; left: 12.5cm;">OS: 001</div>`;
 
             // LINHA 2
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 19); // Estava 18
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 30), 50); // Estava 50 (Agora cabe 30 letras no nome!)
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 85);                  // Estava 80
+            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 4.5cm;">001 TURISMO PAVAO LTDA</div>`;
+            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 10.2cm;">${mot.nome.substring(0, 25)}</div>`;
+            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 17.5cm;">${mot.data}</div>`;
 
             // LINHA 3
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 18);                     
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 50);                   
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 87);           
+            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 4.5cm;">10</div>`;
+            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 10.2cm;">${mot.id}</div>`;
+            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 17.5cm;">MOTORISTA MIC</div>`;
 
-            // --- VIAGENS ---
-            let linhaAtual = 5; 
+            // VIAGENS
+            let topoViagem = 2.7; // Começa em 2,7 cm
             mot.viagens.forEach(v => {
-                if(linhaAtual < 32) {
-                    let str = "".padEnd(130, " ");
-                    // Colunas das viagens também foram mais espaçadas
-                    str = inserirNaPosicao(str, (v.linha || ""), 0);
-                    str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 24);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 34);
-                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 43);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 52);
-                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
-                    str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
-                    pagina[linhaAtual] = str;
-                    linhaAtual += 2;
-                }
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 0.8cm;">${v.linha || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 3.0cm;">${v.veiculo || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 6.0cm;">${v.checkList1 || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 8.0cm;">${v.deslocamento1 || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 10.0cm;">${v.pontoInicial || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 12.5cm;">${v.pontoFinal || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 15.0cm;">${v.deslocamento2 || ""}</div>`;
+                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 17.5cm;">${v.checkList2 || ""}</div>`;
+                
+                topoViagem += 0.8; // Pula 0,8 cm para a próxima linha de viagem
             });
 
-            // Une as linhas cortando o excesso de espaços no final para não bugar o Windows
-            let limpo = pagina.map(l => l.trimEnd()).join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            textoFinal += limpo + "\f"; 
+            htmlFolha += `</div>`;
+            area.innerHTML += htmlFolha;
         });
-
-        const blob = new Blob([textoFinal], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "ficha_fonte9.txt";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 </script>
 
