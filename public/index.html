@@ -2,29 +2,26 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Epson LX-350</title>
+    <title>Emissor Pavao - Final</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .upload-area { margin: 20px 0; padding: 30px; border: 2px dashed #0056b3; text-align: center; border-radius: 5px; }
-        button { padding: 12px 20px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        button:hover { background-color: #003d7a; }
-        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; }
-        #status { margin-top: 10px; font-weight: bold; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #0056b3; text-align: center; }
+        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; }
+        .btn-success { background-color: #28a745; margin-top: 20px; display: none; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Ficha de Serviço - Epson LX-350</h1>
+    <h1>Emissor de Ficha de Serviços</h1>
     <div class="upload-area">
-        <p>Selecione a planilha do motorista:</p>
         <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
         <br><br>
-        <button onclick="processarPlanilha()">1. Carregar Planilha</button>
-        <div id="status"></div>
+        <button onclick="processarPlanilha()">1. Carregar Dados</button>
     </div>
-    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar Arquivo para LX-350</button>
+    <div id="visualizacao"></div>
+    <button id="btnImprimir" class="btn-success" onclick="gerarTXT()">2. Gerar TXT</button>
 </div>
 
 <script>
@@ -33,18 +30,16 @@
     async function processarPlanilha() {
         const fileInput = document.getElementById('arquivoExcel');
         if (fileInput.files.length === 0) { alert("Selecione um arquivo!"); return; }
-        
         const formData = new FormData();
         formData.append("planilha", fileInput.files[0]);
-
         try {
             const response = await fetch('/processar-excel', { method: 'POST', body: formData });
             motoristasGlobais = await response.json();
             if (motoristasGlobais.length > 0) {
-                document.getElementById('status').innerHTML = `<span style="color:green">✔ ${motoristasGlobais.length} motoristas prontos!</span>`;
+                document.getElementById('visualizacao').innerHTML = `<p style="color:green">✔ ${motoristasGlobais.length} carregados.</p>`;
                 document.getElementById('btnImprimir').style.display = 'block';
             }
-        } catch (e) { alert("Erro ao conectar com o servidor."); }
+        } catch (e) { alert("Erro ao carregar dados."); }
     }
 
     function inserirNaPosicao(linhaBase, texto, pos) {
@@ -57,50 +52,49 @@
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Criamos a página com 80 colunas (padrão da LX-350 em Fonte 10)
+            // Criamos a folha (33 linhas por 82 colunas)
             let pagina = Array(33).fill("".padEnd(80, " "));
 
-            // --- CABEÇALHO ---
-            // LINHA 1 (Alvo: 1,0cm)
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 40); 
+            // --- LINHA 1 ---
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 60); 
 
-            // LINHA 2 (Alvo: 1,5cm)
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 7); 
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 30); // Alvo: 10,2cm -> Col 30
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 59);                  // Alvo: 17,5cm -> Col 59
+            // --- LINHA 2 ---
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 18); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 50); // 10,2cm -> Col 40
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 80);                  // 17,5cm -> Col 69
 
-            // LINHA 3 (Alvo: 1,8cm)
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 7);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 30);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 59);
+            // --- LINHA 3 ---
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 50);                   // 10,2cm -> Col 40
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 80);           // 17,5cm -> Col 69
 
-            // --- VIAGENS (Início em 2,7cm) ---
+            // --- VIAGENS ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
                     let str = "".padEnd(80, " ");
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 20);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 28);
-                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 38);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 48);
-                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 58);
-                    str = inserirNaPosicao(str, (v.checkList2 || ""), 68);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 22);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 30);
+                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 40);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 50);
+                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
+                    str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
                     pagina[linhaAtual] = str;
                     linhaAtual += 2;
                 }
             });
 
-            // Gera o texto sem comandos ESC/P para não sujar a folha
-            let limpo = pagina.join("\r\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Une as linhas e adiciona quebra de página
+            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += limpo + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_pavao_limpa.txt";
+        link.download = "ficha_final.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
