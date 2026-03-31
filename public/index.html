@@ -2,61 +2,69 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Modo Visual</title>
+    <title>Calibrador Visual - Pavao</title>
     <style>
-        /* --- ESTILOS DA TELA (VISUALIZAÇÃO) --- */
-        body { font-family: Arial, sans-serif; background-color: #555; margin: 0; padding: 20px; text-align: center; }
+        /* --- ESTILOS DA TELA --- */
+        body { font-family: Arial, sans-serif; background-color: #333; margin: 0; padding: 20px; text-align: center; }
         .controles { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: inline-block; text-align: left;}
         button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-weight: bold; }
         .btn-success { background-color: #28a745; margin-left: 10px; display: none; }
+        
+        /* Barra flutuante que mostra as coordenadas para você copiar */
+        #painelCoordenadas {
+            position: fixed; top: 10px; right: 10px; background: #ffeb3b; color: black; 
+            padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 16px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); display: none; z-index: 1000;
+        }
 
-        /* --- A FOLHA DE PAPEL VIRTUAL --- */
-       /* --- A FOLHA DE PAPEL VIRTUAL (AGORA COM 24CM) --- */
+        /* --- A FOLHA VIRTUAL (24x14) --- */
         .folha {
-            /* Tamanho exato da folha COM OS FUROS de ponta a ponta */
             width: 24cm; 
             height: 14cm; 
-            
-            /* Sua imagem escaneada */
-            background-image: url('fundo.jpg'); 
-            
-            /* Força a imagem a esticar/encolher para caber exatamente nos 24x14 */
+            background-image: url('fundo.jpg'); /* COLOQUE SUA FOTO AQUI */
             background-size: 24cm 14cm;
             background-position: top left;
             background-repeat: no-repeat;
-            
             background-color: white;
             margin: 0 auto 20px auto;
             position: relative; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
             overflow: hidden;
             text-align: left;
         }
 
-        /* --- CONFIGURAÇÕES PARA A HORA DE IMPRIMIR --- */
+        /* --- OS TEXTOS ARRASTÁVEIS --- */
+        .campo {
+            position: absolute;
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 10pt; 
+            font-weight: bold;
+            color: black;
+            white-space: pre;
+            cursor: move; /* Muda o mouse para uma cruzinha de arrastar */
+            user-select: none; /* Impede de selecionar o texto sem querer ao arrastar */
+            padding: 2px;
+        }
+        
+        /* Um fundo amarelinho quando você passa o mouse para saber onde clicar */
+        .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
+
+        /* --- NA HORA DE IMPRIMIR --- */
         @media print {
             body { background: white; margin: 0; padding: 0; }
-            .controles { display: none !important; } 
-            
-            .folha {
-                background-image: none !important; /* Esconde a foto na hora de imprimir! */
-                box-shadow: none;
-                margin: 0;
-                page-break-after: always; 
-            }
-
-            /* Diz para o Chrome que o papel físico tem 24x14 */
-            @page {
-                size: 24cm 14cm; 
-                margin: 0; 
-            }
+            .controles, #painelCoordenadas { display: none !important; } 
+            .campo:hover { background-color: transparent; outline: none; }
+            .folha { background-image: none !important; box-shadow: none; margin: 0; page-break-after: always; }
+            @page { size: 24cm 14cm; margin: 0; }
         }
     </style>
 </head>
 <body>
 
+<div id="painelCoordenadas">Arraste um item</div>
+
 <div class="controles">
-    <h2>Ficha de Serviço - Modo Visual</h2>
+    <h2>Calibrador Visual (Arraste os Textos)</h2>
     <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
     <button onclick="processarPlanilha()">1. Carregar Dados</button>
     <button id="btnImprimir" class="btn-success" onclick="window.print()">2. Imprimir Direto</button>
@@ -67,11 +75,8 @@
 <script>
     let motoristasGlobais = [];
 
-    // Finge uma resposta do servidor para testes (já que não tenho seu backend)
-    // No seu código real, mantenha o seu fetch('/processar-excel')
+    // Finge o carregamento para testarmos na tela
     async function processarPlanilha() {
-        // ... (MANTENHA AQUI O SEU CÓDIGO DE LER O EXCEL) ...
-        // Simulando dados para o exemplo:
         motoristasGlobais = [{
             nome: "LUCAS BUENO DA SILVA JUNIOR", data: "31/03/2026", id: "98765",
             viagens: [
@@ -82,51 +87,88 @@
 
         gerarTelasVisuais();
         document.getElementById('btnImprimir').style.display = 'inline-block';
+        
+        // Ativa o sistema de arrastar em todos os textos criados
+        document.querySelectorAll('.campo').forEach(ativarArraste);
     }
 
     function gerarTelasVisuais() {
         const area = document.getElementById('areaImpressao');
-        area.innerHTML = ""; // Limpa a tela
+        area.innerHTML = ""; 
 
         motoristasGlobais.forEach(mot => {
-            let htmlFolha = `<div class="folha">`;
+            let html = `<div class="folha">`;
 
-            // ==========================================================
-            // A MÁGICA AQUI: POSIÇÕES EM CENTÍMETROS!
-            // Basta mudar o top (cima para baixo) e o left (esquerda para direita)
-            // ==========================================================
+            // VALORES INICIAIS (Chutados, você vai arrastar para corrigir)
+            html += `<div class="campo" style="top: 1cm; left: 12.5cm;">OS: 001</div>`;
+            html += `<div class="campo" style="top: 1.5cm; left: 4.5cm;">001 TURISMO PAVAO LTDA</div>`;
+            html += `<div class="campo" style="top: 1.5cm; left: 10.2cm;">${mot.nome.substring(0, 25)}</div>`;
+            html += `<div class="campo" style="top: 1.5cm; left: 17.5cm;">${mot.data}</div>`;
+            html += `<div class="campo" style="top: 1.8cm; left: 4.5cm;">10</div>`;
+            html += `<div class="campo" style="top: 1.8cm; left: 10.2cm;">${mot.id}</div>`;
+            html += `<div class="campo" style="top: 1.8cm; left: 17.5cm;">MOTORISTA MIC</div>`;
 
-            // LINHA 1
-            htmlFolha += `<div class="campo" style="top: 1.0cm; left: 12.5cm;">OS: 001</div>`;
-
-            // LINHA 2
-            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 4.5cm;">001 TURISMO PAVAO LTDA</div>`;
-            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 10.2cm;">${mot.nome.substring(0, 25)}</div>`;
-            htmlFolha += `<div class="campo" style="top: 1.5cm; left: 17.5cm;">${mot.data}</div>`;
-
-            // LINHA 3
-            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 4.5cm;">10</div>`;
-            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 10.2cm;">${mot.id}</div>`;
-            htmlFolha += `<div class="campo" style="top: 1.8cm; left: 17.5cm;">MOTORISTA MIC</div>`;
-
-            // VIAGENS
-            let topoViagem = 2.7; // Começa em 2,7 cm
+            let topoViagem = 2.7; 
             mot.viagens.forEach(v => {
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 0.8cm;">${v.linha || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 3.0cm;">${v.veiculo || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 6.0cm;">${v.checkList1 || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 8.0cm;">${v.deslocamento1 || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 10.0cm;">${v.pontoInicial || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 12.5cm;">${v.pontoFinal || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 15.0cm;">${v.deslocamento2 || ""}</div>`;
-                htmlFolha += `<div class="campo" style="top: ${topoViagem}cm; left: 17.5cm;">${v.checkList2 || ""}</div>`;
-                
-                topoViagem += 0.8; // Pula 0,8 cm para a próxima linha de viagem
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 2.0cm;">${v.linha || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 4.0cm;">${v.veiculo || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 6.0cm;">${v.checkList1 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 8.0cm;">${v.deslocamento1 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 10.0cm;">${v.pontoInicial || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.5cm;">${v.pontoFinal || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.0cm;">${v.deslocamento2 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 17.5cm;">${v.checkList2 || "---"}</div>`;
+                topoViagem += 0.8; 
             });
 
-            htmlFolha += `</div>`;
-            area.innerHTML += htmlFolha;
+            html += `</div>`;
+            area.innerHTML += html;
         });
+    }
+
+    // ==========================================
+    // SCRIPT DE DRAG AND DROP (ARRASTAR)
+    // ==========================================
+    function ativarArraste(elemento) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const painel = document.getElementById('painelCoordenadas');
+
+        elemento.onmousedown = function(e) {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = soltarElemento;
+            document.onmousemove = arrastarElemento;
+            painel.style.display = 'block';
+        };
+
+        function arrastarElemento(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            // Move o elemento em Pixels
+            elemento.style.top = (elemento.offsetTop - pos2) + "px";
+            elemento.style.left = (elemento.offsetLeft - pos1) + "px";
+        }
+
+        function soltarElemento() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+
+            // Converter os Pixels finais de volta para Centímetros (1cm = ~37.8px)
+            let cmTop = (elemento.offsetTop / 37.795).toFixed(2);
+            let cmLeft = (elemento.offsetLeft / 37.795).toFixed(2);
+
+            // Atualiza o painel amarelo para você copiar
+            painel.innerHTML = `Novo local: <b>top: ${cmTop}cm; left: ${cmLeft}cm;</b>`;
+            
+            // Também deixa salvo no atributo style para a impressora usar
+            elemento.style.top = cmTop + "cm";
+            elemento.style.left = cmLeft + "cm";
+        }
     }
 </script>
 
