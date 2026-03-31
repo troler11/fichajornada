@@ -53,26 +53,26 @@
 
         motoristasGlobais.forEach(mot => {
             // Criamos a folha (33 linhas por 82 colunas)
-            let pagina = Array(33).fill("".padEnd(82, " "));
+            let pagina = Array(33).fill("".padEnd(80, " "));
 
             // --- LINHA 1 ---
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 49); 
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 55); 
 
             // --- LINHA 2 ---
             pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 18); 
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 40); // 10,2cm -> Col 40
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 69);                  // 17,5cm -> Col 69
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 45); // 10,2cm -> Col 40
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 70);                  // 17,5cm -> Col 69
 
             // --- LINHA 3 ---
             pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 40);                   // 10,2cm -> Col 40
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 69);           // 17,5cm -> Col 69
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 45);                   // 10,2cm -> Col 40
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 70);           // 17,5cm -> Col 69
 
             // --- VIAGENS ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
-                    let str = "".padEnd(82, " ");
+                    let str = "".padEnd(80, " ");
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
                     str = inserirNaPosicao(str, (v.checkList1 || ""), 22);
