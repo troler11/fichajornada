@@ -56,59 +56,51 @@
     function gerarTXT() {
         let textoFinal = "";
 
-        // COMANDOS NATIVOS EPSON LX-350 (ESC/P)
-        const ESC = String.fromCharCode(27);
-        const RESET = ESC + "@";              // Reseta a impressora
-        const FONT_PICA = ESC + "P";          // Seleciona Fonte 10 CPI (Pica)
-        const LPI_6 = ESC + "2";              // Define espaçamento de 6 linhas por polegada
-        const CANCEL_CONDENSED = String.fromCharCode(18); // Garante que a fonte não esteja "espremida"
-
         motoristasGlobais.forEach(mot => {
-            // Papel de 14cm altura (33 linhas) x 21cm largura (80 colunas na Fonte 10)
+            // Criamos a página com 80 colunas (padrão da LX-350 em Fonte 10)
             let pagina = Array(33).fill("".padEnd(80, " "));
 
-            // --- CABEÇALHO (Medidas exatas para Fonte 10) ---
-            
-            // LINHA 1 (1cm do topo)
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 49); 
+            // --- CABEÇALHO ---
+            // LINHA 1 (Alvo: 1,0cm)
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 40); 
 
-            // LINHA 2 (1,5cm do topo)
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 18); 
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 40); // Alvo: 10,2cm -> Col 40
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 69);                  // Alvo: 17,5cm -> Col 69
+            // LINHA 2 (Alvo: 1,5cm)
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 7); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 30); // Alvo: 10,2cm -> Col 30
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 59);                  // Alvo: 17,5cm -> Col 59
 
-            // LINHA 3 (1,8cm do topo)
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 40);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 69);
+            // LINHA 3 (Alvo: 1,8cm)
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 7);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 30);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 59);
 
-            // --- VIAGENS (Início em 2,7cm do topo) ---
+            // --- VIAGENS (Início em 2,7cm) ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
                     let str = "".padEnd(80, " ");
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 22);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 30);
-                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 40);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 50);
-                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
-                    str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 20);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 28);
+                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 38);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 48);
+                    str = inserirNaPosicao(str, (v.deslocamento2 || ""), 58);
+                    str = inserirNaPosicao(str, (v.checkList2 || ""), 68);
                     pagina[linhaAtual] = str;
-                    linhaAtual += 2; // Espaço para o "Realizado"
+                    linhaAtual += 2;
                 }
             });
 
-            // Montagem: Comandos + Texto + Pulo de Página (\f)
-            let conteudoPagina = RESET + FONT_PICA + LPI_6 + CANCEL_CONDENSED + pagina.join("\n");
-            textoFinal += conteudoPagina.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + "\f"; 
+            // Gera o texto sem comandos ESC/P para não sujar a folha
+            let limpo = pagina.join("\r\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            textoFinal += limpo + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_lx350.txt";
+        link.download = "ficha_pavao_limpa.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
