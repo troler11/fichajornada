@@ -61,14 +61,12 @@
     // Função para Gerar o TXT
     function gerarTXT() {
         let textoFinal = "";
-        const FONTE_CONDENSADA = String.fromCharCode(15);
-        const FONTE_NORMAL = String.fromCharCode(18);
-        // Comando para reduzir o salto de linha (ESC 3 20) para encostar no topo
-        const ESPACAMENTO_MINIMO = String.fromCharCode(27, 51, 20); 
+        const ESC_RESET = String.fromCharCode(27, 64);      // ESC @ (Reseta a impressora)
+        const FONTE_CONDENSADA = String.fromCharCode(15);   // SI (Ativa condensado)
+        const ESPACAMENTO_LINHA = String.fromCharCode(27, 51, 24); // ESC 3 n (Define altura da linha)
 
-       motoristasGlobais.forEach(mot => {
-            // Criamos a página (33 linhas)
-            let pagina = Array(33).fill("".padEnd(82, " "));
+      motoristasGlobais.forEach(mot => {
+            let pagina = Array(33).fill("".padEnd(80, " ")); // Use 80 ou mais
 
             // ====================================================================
             // CABEÇALHO - AJUSTADO PARA 1,0 CM (DESCENDO 1 LINHA)
@@ -111,11 +109,11 @@
                 }
             });
 
-            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            textoFinal += ESPACAMENTO_MINIMO + FONTE_CONDENSADA + limpo + FONTE_NORMAL + "\f"; 
+            let conteudo = ESC_RESET + ESPACAMENTO_LINHA + FONTE_CONDENSADA + pagina.join("\n");
+           textoFinal += conteudo.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + "\f";
         });
 
-        const blob = new Blob([textoFinal], { type: "text/plain" });
+       const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "ficha_ajuste_final.txt";
