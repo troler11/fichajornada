@@ -55,7 +55,8 @@
         .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
 
         /* --- NA HORA DE IMPRIMIR --- */
-       @media print {
+       /* --- NA HORA DE IMPRIMIR --- */
+        @media print {
             body { background: white; margin: 0; padding: 0; }
             .controles, #painelCoordenadas { display: none !important; } 
             .campo:hover { background-color: transparent; outline: none; }
@@ -64,12 +65,12 @@
                 background-image: none !important; 
                 box-shadow: none; 
                 
-                /* O SEGREDO AQUI: Puxa o conteúdo de volta para a esquerda na marra */
-                margin-left: -2.7cm !important; 
+                /* OS SEUS AJUSTES DE CALIBRAÇÃO FINA FICAM AQUI: */
+                margin-left: -2.7cm !important; /* Seu ajuste lateral anterior */
+                margin-top: 0.14cm !important;  /* NOVO: Empurra 1,4 milímetros para baixo! */
                 
                 page-break-after: always; 
             }
-            
             @page { size: 24cm 14cm; margin: 0; }
         }
     </style>
