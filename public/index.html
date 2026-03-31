@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Calibrador Visual - Pavao</title>
+    <title>Emissor Pavao - Produção Visual</title>
     <style>
         /* --- ESTILOS DA TELA --- */
         body { font-family: Arial, sans-serif; background-color: #333; margin: 0; padding: 20px; text-align: center; }
@@ -10,7 +10,6 @@
         button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-weight: bold; }
         .btn-success { background-color: #28a745; margin-left: 10px; display: none; }
         
-        /* Barra flutuante que mostra as coordenadas para você copiar */
         #painelCoordenadas {
             position: fixed; top: 10px; right: 10px; background: #ffeb3b; color: black; 
             padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 16px;
@@ -33,29 +32,22 @@
             text-align: left;
         }
 
-        /* --- OS TEXTOS ARRASTÁVEIS --- */
+        /* --- OS TEXTOS --- */
         .campo {
             position: absolute;
             font-family: 'Courier New', Courier, monospace; 
-            
-            /* ======================================================= */
-            /* AQUI ESTÁ A FONTE MENOR (Pode colocar 8pt se precisar)  */
-            /* ======================================================= */
-            font-size: 8pt; 
-            
+            font-size: 8pt; /* A FONTE MENOR QUE VOCÊ PEDIU */
             font-weight: bold;
             color: black;
             white-space: pre;
-            cursor: move; /* Muda o mouse para uma cruzinha de arrastar */
-            user-select: none; /* Impede de selecionar o texto sem querer ao arrastar */
+            cursor: move; 
+            user-select: none; 
             padding: 2px;
         }
         
-        /* Um fundo amarelinho quando você passa o mouse para saber onde clicar */
         .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
 
         /* --- NA HORA DE IMPRIMIR --- */
-       /* --- NA HORA DE IMPRIMIR --- */
         @media print {
             body { background: white; margin: 0; padding: 0; }
             .controles, #painelCoordenadas { display: none !important; } 
@@ -65,9 +57,9 @@
                 background-image: none !important; 
                 box-shadow: none; 
                 
-                /* OS SEUS AJUSTES DE CALIBRAÇÃO FINA FICAM AQUI: */
-                margin-left: -2.4cm !important; /* Seu ajuste lateral anterior */
-                margin-top: 0.24cm !important;  /* NOVO: Empurra 1,4 milímetros para baixo! */
+                /* SEUS AJUSTES DE CALIBRAÇÃO FINA */
+                margin-left: -2.4cm !important; 
+                margin-top: 0.24cm !important;  
                 
                 page-break-after: always; 
             }
@@ -80,10 +72,11 @@
 <div id="painelCoordenadas">Arraste um item</div>
 
 <div class="controles">
-    <h2>Calibrador Visual (Arraste os Textos)</h2>
+    <h2>Emissor Visual de Fichas</h2>
     <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
-    <button onclick="processarPlanilha()">1. Carregar Dados</button>
+    <button onclick="processarPlanilha()">1. Carregar Dados Reais</button>
     <button id="btnImprimir" class="btn-success" onclick="window.print()">2. Imprimir Direto</button>
+    <div id="visualizacao"></div>
 </div>
 
 <div id="areaImpressao"></div>
@@ -91,21 +84,38 @@
 <script>
     let motoristasGlobais = [];
 
-    // Finge o carregamento para testarmos na tela
+    // LENDO OS DADOS REAIS DO SERVIDOR
     async function processarPlanilha() {
-        motoristasGlobais = [{
-            nome: "LUCAS BUENO DA SILVA JUNIOR", data: "31/03/2026", id: "98765",
-            viagens: [
-                {linha: "LINHA A", veiculo: "V-100", checkList1: "08:00", pontoInicial: "08:30", pontoFinal: "09:00", checkList2: "09:15"},
-                {linha: "LINHA B", veiculo: "V-200", checkList1: "10:00", pontoInicial: "10:30", pontoFinal: "11:00", checkList2: "11:15"}
-            ]
-        }];
+        const fileInput = document.getElementById('arquivoExcel');
+        if (fileInput.files.length === 0) {
+            alert("Selecione um arquivo Excel primeiro!");
+            return;
+        }
 
-        gerarTelasVisuais();
-        document.getElementById('btnImprimir').style.display = 'inline-block';
-        
-        // Ativa o sistema de arrastar em todos os textos criados
-        document.querySelectorAll('.campo').forEach(ativarArraste);
+        const formData = new FormData();
+        formData.append("planilha", fileInput.files[0]);
+
+        try {
+            document.getElementById('visualizacao').innerHTML = "<p>Processando...</p>";
+            
+            const response = await fetch('/processar-excel', { method: 'POST', body: formData });
+            motoristasGlobais = await response.json();
+            
+            if (motoristasGlobais.length > 0) {
+                document.getElementById('visualizacao').innerHTML = `<p style="color:green">✔ ${motoristasGlobais.length} motoristas carregados com sucesso.</p>`;
+                
+                gerarTelasVisuais();
+                document.getElementById('btnImprimir').style.display = 'inline-block';
+                
+                // Mantém o arrastar ativado caso você queira ajustar um motorista específico
+                document.querySelectorAll('.campo').forEach(ativarArraste);
+            } else {
+                document.getElementById('visualizacao').innerHTML = `<p style="color:red">Nenhum dado encontrado na planilha.</p>`;
+            }
+        } catch (e) {
+            alert("Erro ao carregar dados. O servidor (Node.js/Python) está rodando?");
+            document.getElementById('visualizacao').innerHTML = "";
+        }
     }
 
     function gerarTelasVisuais() {
@@ -115,25 +125,29 @@
         motoristasGlobais.forEach(mot => {
             let html = `<div class="folha">`;
 
-            // VALORES INICIAIS (Chutados, você vai arrastar para corrigir)
+            // CABEÇALHO (Com as suas coordenadas calibradas!)
             html += `<div class="campo" style="top: 0.74cm; left: 14.63cm;">OS: 001</div>`;
             html += `<div class="campo" style="top: 1.14cm; left: 6.22cm;">001 TURISMO PAVAO LTDA</div>`;
-            html += `<div class="campo" style="top: 1.14cm; left: 12.01cm;">${mot.nome.substring(0, 25)}</div>`;
-            html += `<div class="campo" style="top: 1.14cm; left: 18.6cm;">${mot.data}</div>`;
+            html += `<div class="campo" style="top: 1.14cm; left: 12.01cm;">${(mot.nome || "").substring(0, 30)}</div>`; // Protege contra nome vazio
+            html += `<div class="campo" style="top: 1.14cm; left: 18.6cm;">${mot.data || ""}</div>`;
             html += `<div class="campo" style="top: 1.59cm; left: 6.24cm;">10</div>`;
-            html += `<div class="campo" style="top: 1.59cm; left: 12.07cm;">${mot.id}</div>`;
+            html += `<div class="campo" style="top: 1.59cm; left: 12.07cm;">${mot.id || ""}</div>`;
             html += `<div class="campo" style="top: 1.59cm; left: 18.94cm;">MOTORISTA MIC</div>`;
 
+            // VIAGENS
             let topoViagem = 2.75; 
-            mot.viagens.forEach(v => {
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 2.67cm;">${v.linha || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 4.68cm;">${v.veiculo || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 7.12cm;">${v.checkList1 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 9.13cm;">${v.deslocamento1 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 10.74cm;">${v.pontoInicial || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.49cm;">${v.pontoFinal || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 14.37cm;">${v.deslocamento2 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.95cm;">${v.checkList2 || "---"}</div>`;
+            // Se o motorista não tiver viagens, cria um array vazio para não quebrar o código
+            const viagens = mot.viagens || []; 
+            
+            viagens.forEach(v => {
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 2.67cm;">${v.linha || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 4.68cm;">${v.veiculo || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 7.12cm;">${v.checkList1 || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 9.13cm;">${v.deslocamento1 || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 10.74cm;">${v.pontoInicial || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.49cm;">${v.pontoFinal || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 14.37cm;">${v.deslocamento2 || ""}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.95cm;">${v.checkList2 || ""}</div>`;
                 topoViagem += 1.0; 
             });
 
@@ -165,7 +179,6 @@
             pos3 = e.clientX;
             pos4 = e.clientY;
             
-            // Move o elemento em Pixels
             elemento.style.top = (elemento.offsetTop - pos2) + "px";
             elemento.style.left = (elemento.offsetLeft - pos1) + "px";
         }
@@ -174,14 +187,11 @@
             document.onmouseup = null;
             document.onmousemove = null;
 
-            // Converter os Pixels finais de volta para Centímetros (1cm = ~37.8px)
             let cmTop = (elemento.offsetTop / 37.795).toFixed(2);
             let cmLeft = (elemento.offsetLeft / 37.795).toFixed(2);
 
-            // Atualiza o painel amarelo para você copiar
             painel.innerHTML = `Novo local: <b>top: ${cmTop}cm; left: ${cmLeft}cm;</b>`;
             
-            // Também deixa salvo no atributo style para a impressora usar
             elemento.style.top = cmTop + "cm";
             elemento.style.left = cmLeft + "cm";
         }
