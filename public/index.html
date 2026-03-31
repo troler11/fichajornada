@@ -66,26 +66,36 @@
         // Comando para reduzir o salto de linha (ESC 3 20) para encostar no topo
         const ESPACAMENTO_MINIMO = String.fromCharCode(27, 51, 20); 
 
-        motoristasGlobais.forEach(mot => {
+       motoristasGlobais.forEach(mot => {
             // Criamos a página (33 linhas)
             let pagina = Array(33).fill("".padEnd(82, " "));
 
-            // LINHA 0 (Alvo: 0,08 cm - Colada no topo)
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 56); 
+            // ====================================================================
+            // CABEÇALHO - AJUSTADO PARA 1,0 CM (DESCENDO 1 LINHA)
+            // ====================================================================
+            
+            // LINHA 0 - Deixamos vazia para criar o recuo do topo (Aprox. 0,42cm)
+            // pagina[0] fica em branco.
 
-            // LINHA 1 (Aprox 0,5cm)
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 10); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 20), 44); 
-            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 75);                 
+            // LINHA 1 - OS (Agora vai imprimir em aprox. 0,9cm - 1,0cm)
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 56); 
 
-            // LINHA 2 (Aprox 0,9cm)
-            pagina[2] = inserirNaPosicao(pagina[2], "10", 10);                     
-            pagina[2] = inserirNaPosicao(pagina[2], mot.id, 44);                   
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 74);
+            // LINHA 2 - Empresa / Nome / Data (Descendo para acompanhar)
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 10); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 20), 44); 
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 75);                 
 
-            // VIAGENS (Início na linha 4)
-            let linhaAtual = 4; 
+            // LINHA 3 - Filial / Chapa / Função
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 10);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 44);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 74);
+
+            // ====================================================================
+            // VIAGENS - AJUSTADO PARA NÃO ENCAVALAR (Início na linha 6)
+            // ====================================================================
+            let linhaAtual = 6; 
             mot.viagens.forEach(v => {
+                // ... (resto do código das viagens igual)
                 if(linhaAtual < 32) {
                     let str = "".padEnd(82, " ");
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
