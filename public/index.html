@@ -11,51 +11,44 @@
         .btn-success { background-color: #28a745; margin-left: 10px; display: none; }
 
         /* --- A FOLHA DE PAPEL VIRTUAL --- */
+       /* --- A FOLHA DE PAPEL VIRTUAL (AGORA COM 24CM) --- */
         .folha {
-            /* Tamanho exato da área útil sem furos */
-            width: 21cm; 
+            /* Tamanho exato da folha COM OS FUROS de ponta a ponta */
+            width: 24cm; 
             height: 14cm; 
             
-            /* Coloque aqui a imagem escaneada do seu formulário para ajudar a alinhar! */
+            /* Sua imagem escaneada */
             background-image: url('fundo.jpg'); 
-            background-size: 21cm 14cm;
+            
+            /* Força a imagem a esticar/encolher para caber exatamente nos 24x14 */
+            background-size: 24cm 14cm;
+            background-position: top left;
             background-repeat: no-repeat;
             
             background-color: white;
             margin: 0 auto 20px auto;
-            position: relative; /* Permite posicionar itens soltos aqui dentro */
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: relative; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
             overflow: hidden;
             text-align: left;
-        }
-
-        /* --- OS TEXTOS (POSIÇÃO ABSOLUTA) --- */
-        .campo {
-            position: absolute;
-            font-family: 'Courier New', Courier, monospace; /* Fonte quadradinha padrão */
-            font-size: 10pt; /* Tamanho 10! */
-            font-weight: bold;
-            color: black;
-            white-space: pre;
-            /* background-color: rgba(255, 255, 0, 0.3); Descomente para ver o fundo amarelo e ajustar melhor */
         }
 
         /* --- CONFIGURAÇÕES PARA A HORA DE IMPRIMIR --- */
         @media print {
             body { background: white; margin: 0; padding: 0; }
-            .controles { display: none !important; } /* Esconde os botões */
+            .controles { display: none !important; } 
             
             .folha {
-                background-image: none !important; /* Esconde a foto do formulário! */
+                background-image: none !important; /* Esconde a foto na hora de imprimir! */
                 box-shadow: none;
                 margin: 0;
-                page-break-after: always; /* Pula de página para cada motorista */
+                page-break-after: always; 
             }
 
-            /* Configura a impressora para usar o papel exato e zerar margens */
+            /* Diz para o Chrome que o papel físico tem 24x14 */
             @page {
-                size: 21cm 14cm; /* Tamanho útil da LX-350 */
-                margin: 0; /* Tira as margens do navegador */
+                size: 24cm 14cm; 
+                margin: 0; 
             }
         }
     </style>
