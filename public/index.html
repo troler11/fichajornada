@@ -67,7 +67,7 @@
                 
                 /* OS SEUS AJUSTES DE CALIBRAÇÃO FINA FICAM AQUI: */
                 margin-left: -2.5cm !important; /* Seu ajuste lateral anterior */
-                margin-top: 0.17cm !important;  /* NOVO: Empurra 1,4 milímetros para baixo! */
+                margin-top: 0.19cm !important;  /* NOVO: Empurra 1,4 milímetros para baixo! */
                 
                 page-break-after: always; 
             }
@@ -124,16 +124,16 @@
             html += `<div class="campo" style="top: 1.59cm; left: 12.07cm;">${mot.id}</div>`;
             html += `<div class="campo" style="top: 1.59cm; left: 18.94cm;">MOTORISTA MIC</div>`;
 
-            let topoViagem = 2.7; 
+            let topoViagem = 3.62; 
             mot.viagens.forEach(v => {
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 2.0cm;">${v.linha || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 4.0cm;">${v.veiculo || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 6.0cm;">${v.checkList1 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 8.0cm;">${v.deslocamento1 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 10.0cm;">${v.pontoInicial || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.5cm;">${v.pontoFinal || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.0cm;">${v.deslocamento2 || "---"}</div>`;
-                html += `<div class="campo" style="top: ${topoViagem}cm; left: 17.5cm;">${v.checkList2 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 2.67cm;">${v.linha || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 4.68cm;">${v.veiculo || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 7.12cm;">${v.checkList1 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 9.13cm;">${v.deslocamento1 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 10.74cm;">${v.pontoInicial || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.49cm;">${v.pontoFinal || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 14.37cm;">${v.deslocamento2 || "---"}</div>`;
+                html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.95cm;">${v.checkList2 || "---"}</div>`;
                 topoViagem += 0.8; 
             });
 
