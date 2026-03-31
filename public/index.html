@@ -73,7 +73,7 @@
             // LINHA 3 (1,8cm topo)
             pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
             pagina[3] = inserirNaPosicao(pagina[3], mot.id, 50);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 85);          
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 87);          
 
             // --- VIAGENS (Início 0,8cm da esquerda na Coluna 2) ---
             let linhaAtual = 6; 
@@ -82,10 +82,10 @@
                     let str = "".padEnd(130, " ");
                     str = inserirNaPosicao(str, (v.linha || ""), 0); 
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 20);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 30);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 23);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 33);
                     str = inserirNaPosicao(str, (v.pontoInicial || ""), 42);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 50);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 52);
                     str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
                     str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
                     pagina[linhaAtual] = str;
