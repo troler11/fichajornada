@@ -62,17 +62,17 @@
             // --- CABEÇALHO (Valores espichados para a fonte menor) ---
             
             // LINHA 1
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 78); // Estava 65
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 65); // Estava 65
 
             // LINHA 2
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 21); // Estava 18
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 30), 60); // Estava 50 (Agora cabe 30 letras no nome!)
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 96);                  // Estava 80
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 21); // Estava 18
+            pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 30), 50); // Estava 50 (Agora cabe 30 letras no nome!)
+            pagina[1] = inserirNaPosicao(pagina[1], mot.data, 80);                  // Estava 80
 
             // LINHA 3
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 21);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 60);                   
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 96);           
+            pagina[2] = inserirNaPosicao(pagina[3], "10", 21);                     
+            pagina[2] = inserirNaPosicao(pagina[3], mot.id, 50);                   
+            pagina[2] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 80);           
 
             // --- VIAGENS ---
             let linhaAtual = 6; 
