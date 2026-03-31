@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Emissor Pavao - Final</title>
+    <title>Emissor Pavao - Calibração 0,8cm e 17,5cm</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -42,9 +42,14 @@
         } catch (e) { alert("Erro ao carregar dados."); }
     }
 
+    // Função ajustada para aceitar colunas além do limite inicial
     function inserirNaPosicao(linhaBase, texto, pos) {
         if (!texto) return linhaBase;
         const txt = String(texto).toUpperCase();
+        // Se a posição for maior que a linha atual, aumenta a linha
+        if (pos + txt.length > linhaBase.length) {
+            linhaBase = linhaBase.padEnd(pos + txt.length, " ");
+        }
         return linhaBase.substring(0, pos) + txt + linhaBase.substring(pos + txt.length);
     }
 
@@ -52,28 +57,30 @@
         let textoFinal = "";
 
         motoristasGlobais.forEach(mot => {
-            // Criamos a folha (33 linhas por 82 colunas)
-            let pagina = Array(33).fill("".padEnd(80, " "));
+            // Criamos a folha com margem estendida para a LX-350 não cortar o fim da linha
+            let pagina = Array(33).fill("".padEnd(120, " "));
 
-            // --- LINHA 1 ---
-            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 62); 
+            // --- CABEÇALHO ---
+            // OS: Para 12,5cm (Aumentado para compensar recuo)
+            pagina[1] = inserirNaPosicao(pagina[1], "OS: 001", 72); 
 
             // --- LINHA 2 ---
-            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 18); 
-            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 50); // 10,2cm -> Col 40
-            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 91);                  // 17,5cm -> Col 69
+            pagina[2] = inserirNaPosicao(pagina[2], "001 TURISMO PAVAO LTDA", 16); // Puxado -2 colunas para 0,8cm
+            pagina[2] = inserirNaPosicao(pagina[2], mot.nome.substring(0, 25), 52); // Alvo 10,2cm
+            pagina[2] = inserirNaPosicao(pagina[2], mot.data, 102);                 // Aumentado para chegar nos 17,5cm
 
             // --- LINHA 3 ---
-            pagina[3] = inserirNaPosicao(pagina[3], "10", 18);                     
-            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 50);                   // 10,2cm -> Col 40
-            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 91);           // 17,5cm -> Col 69
+            pagina[3] = inserirNaPosicao(pagina[3], "10", 16);                     
+            pagina[3] = inserirNaPosicao(pagina[3], mot.id, 52);                   
+            pagina[3] = inserirNaPosicao(pagina[3], "MOTORISTA MIC", 102);          
 
             // --- VIAGENS ---
             let linhaAtual = 6; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
-                    let str = "".padEnd(80, " ");
-                    str = inserirNaPosicao(str, (v.linha || ""), 0);
+                    let str = "".padEnd(120, " ");
+                    // Começando na posição 0 para o 0,8cm (Depende da margem do Bloco de Notas)
+                    str = inserirNaPosicao(str, (v.linha || ""), 0); 
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
                     str = inserirNaPosicao(str, (v.checkList1 || ""), 23);
                     str = inserirNaPosicao(str, (v.deslocamento1 || ""), 32);
@@ -86,15 +93,15 @@
                 }
             });
 
-            // Une as linhas e adiciona quebra de página
-            let limpo = pagina.join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Une as linhas e remove acentos
+            let limpo = pagina.map(l => l.trimEnd()).join("\n").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             textoFinal += limpo + "\f"; 
         });
 
         const blob = new Blob([textoFinal], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ficha_final.txt";
+        link.download = "ficha_ajuste_fino.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
