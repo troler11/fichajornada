@@ -65,7 +65,7 @@
                 box-shadow: none; 
                 
                 /* O SEGREDO AQUI: Puxa o conteúdo de volta para a esquerda na marra */
-                margin-left: -2.3cm !important; 
+                margin-left: -2.7cm !important; 
                 
                 page-break-after: always; 
             }
@@ -115,13 +115,13 @@
             let html = `<div class="folha">`;
 
             // VALORES INICIAIS (Chutados, você vai arrastar para corrigir)
-            html += `<div class="campo" style="top: 1cm; left: 12.5cm;">OS: 001</div>`;
-            html += `<div class="campo" style="top: 1.5cm; left: 4.5cm;">001 TURISMO PAVAO LTDA</div>`;
-            html += `<div class="campo" style="top: 1.5cm; left: 10.2cm;">${mot.nome.substring(0, 25)}</div>`;
-            html += `<div class="campo" style="top: 1.5cm; left: 17.5cm;">${mot.data}</div>`;
-            html += `<div class="campo" style="top: 1.8cm; left: 4.5cm;">10</div>`;
-            html += `<div class="campo" style="top: 1.8cm; left: 10.2cm;">${mot.id}</div>`;
-            html += `<div class="campo" style="top: 1.8cm; left: 17.5cm;">MOTORISTA MIC</div>`;
+            html += `<div class="campo" style="top: 0.74cm; left: 14.63cm;">OS: 001</div>`;
+            html += `<div class="campo" style="top: 1.14cm; left: 6.22cm;">001 TURISMO PAVAO LTDA</div>`;
+            html += `<div class="campo" style="top: 1.14cm; left: 12.01cm;">${mot.nome.substring(0, 25)}</div>`;
+            html += `<div class="campo" style="top: 1.14cm; left: 18.6cm;">${mot.data}</div>`;
+            html += `<div class="campo" style="top: 1.59cm; left: 6.24cm;">10</div>`;
+            html += `<div class="campo" style="top: 1.59cm; left: 12.07cm;">${mot.id}</div>`;
+            html += `<div class="campo" style="top: 1.59cm; left: 18.94cm;">MOTORISTA MIC</div>`;
 
             let topoViagem = 2.7; 
             mot.viagens.forEach(v => {
