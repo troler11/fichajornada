@@ -62,7 +62,7 @@
             // --- CABEÇALHO (Valores espichados para a fonte menor) ---
             
             // LINHA 1
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 65); // Estava 65
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 60); // Estava 65
 
             // LINHA 2
             pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 18); // Estava 18
@@ -72,20 +72,20 @@
             // LINHA 3
             pagina[2] = inserirNaPosicao(pagina[2], "10", 18);                     
             pagina[2] = inserirNaPosicao(pagina[2], mot.id, 50);                   
-            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 85);           
+            pagina[2] = inserirNaPosicao(pagina[2], "MOTORISTA MIC", 87);           
 
             // --- VIAGENS ---
-            let linhaAtual = 6; 
+            let linhaAtual = 5; 
             mot.viagens.forEach(v => {
                 if(linhaAtual < 32) {
                     let str = "".padEnd(130, " ");
                     // Colunas das viagens também foram mais espaçadas
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 24);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 34);
-                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 40);
-                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 50);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 20);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 30);
+                    str = inserirNaPosicao(str, (v.pontoInicial || ""), 43);
+                    str = inserirNaPosicao(str, (v.pontoFinal || ""), 52);
                     str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
                     str = inserirNaPosicao(str, (v.checkList2 || ""), 70);
                     pagina[linhaAtual] = str;
