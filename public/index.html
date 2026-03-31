@@ -62,10 +62,10 @@
             // --- CABEÇALHO (Valores espichados para a fonte menor) ---
             
             // LINHA 1
-            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 60); // Estava 65
+            pagina[0] = inserirNaPosicao(pagina[0], "OS: 001", 63); // Estava 65
 
             // LINHA 2
-            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 18); // Estava 18
+            pagina[1] = inserirNaPosicao(pagina[1], "001 TURISMO PAVAO LTDA", 19); // Estava 18
             pagina[1] = inserirNaPosicao(pagina[1], mot.nome.substring(0, 30), 50); // Estava 50 (Agora cabe 30 letras no nome!)
             pagina[1] = inserirNaPosicao(pagina[1], mot.data, 85);                  // Estava 80
 
@@ -82,8 +82,8 @@
                     // Colunas das viagens também foram mais espaçadas
                     str = inserirNaPosicao(str, (v.linha || ""), 0);
                     str = inserirNaPosicao(str, (v.veiculo || ""), 10);
-                    str = inserirNaPosicao(str, (v.checkList1 || ""), 20);
-                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 30);
+                    str = inserirNaPosicao(str, (v.checkList1 || ""), 24);
+                    str = inserirNaPosicao(str, (v.deslocamento1 || ""), 34);
                     str = inserirNaPosicao(str, (v.pontoInicial || ""), 43);
                     str = inserirNaPosicao(str, (v.pontoFinal || ""), 52);
                     str = inserirNaPosicao(str, (v.deslocamento2 || ""), 60);
