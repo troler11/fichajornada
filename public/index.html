@@ -92,8 +92,9 @@
 
             /* CALIBRAÇÃO DO PAPEL FÍSICO (Páginas 2, 4, 6, 8...) */
             .folha:nth-child(even) {
-                /* Se a segunda folha no papel físico sair errada, ajuste este TOP. */
-                top: 0.35cm !important; 
+                /* Para SUBIR a impressão da página par inteira, diminuímos o valor base (0.24cm). 
+                   Aqui está 0.14cm (1 milímetro mais alto). Se precisar subir mais, diminua para 0.10cm. */
+                top: 0.14cm !important; 
             }
 
             .folha:last-child {
@@ -158,7 +159,8 @@
         const area = document.getElementById('areaImpressao');
         area.innerHTML = ""; 
 
-        motoristasGlobais.forEach(mot => {
+        // Adicionamos o 'index' para saber se a folha é par ou ímpar
+        motoristasGlobais.forEach((mot, index) => {
             let html = `<div class="folha">`;
 
             // CABEÇALHO
@@ -171,7 +173,11 @@
             html += `<div class="campo" style="top: 1.59cm; left: 18.94cm;">${mot.funcao || ""}</div>`;
 
             // VIAGENS
-            let topoViagem = 2.75; 
+            // Lógica: index 0 é a Folha 1. index 1 é a Folha 2.
+            // Se o resto da divisão por 2 for diferente de zero, é folha PAR.
+            // Na folha par, usamos 2.65cm para a lista SUBIR na folha. Na ímpar, 2.75cm.
+            let topoViagem = (index % 2 !== 0) ? 2.65 : 2.75; 
+            
             const viagens = mot.viagens || []; 
             
             viagens.forEach(v => {
