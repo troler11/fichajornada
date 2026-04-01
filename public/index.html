@@ -36,7 +36,7 @@
         .campo {
             position: absolute;
             font-family: 'Courier New', Courier, monospace; 
-            font-size: 8pt; /* A FONTE MENOR QUE VOCÊ PEDIU */
+            font-size: 8pt; 
             font-weight: bold;
             color: black;
             white-space: pre;
@@ -48,36 +48,57 @@
         .campo:hover { background-color: rgba(255, 255, 0, 0.4); outline: 1px dashed red; }
 
         /* --- NA HORA DE IMPRIMIR --- */
-      /* --- NA HORA DE IMPRIMIR --- */
         @media print {
-            body { background: white; margin: 0; padding: 0; }
+            * { box-sizing: border-box; }
+            html, body { margin: 0; padding: 0; background: white; }
+            
             .controles, #painelCoordenadas { display: none !important; } 
             .campo:hover { background-color: transparent; outline: none; }
             
             @page { 
                 size: 24cm 14cm; 
-                margin: 0; 
+                margin: 0 !important; 
+            }
+
+            /* MATA O EFEITO DE ENCADERNAÇÃO (Páginas pares vs ímpares) */
+            @page :left { margin: 0 !important; }
+            @page :right { margin: 0 !important; }
+
+            #areaImpressao {
+                margin: 0; padding: 0; display: block;
             }
 
             .folha { 
                 background-image: none !important; 
                 box-shadow: none; 
                 
-                /* FIX: Zera as margens para não estourar os 14cm do @page */
+                /* Reduz 1mm da caixa para evitar pulo de pixel */
+                width: 23.9cm !important;
+                height: 13.9cm !important;
+                
                 margin: 0 !important; 
                 padding: 0 !important;
+                overflow: hidden !important;
                 
-                /* SEUS AJUSTES DE CALIBRAÇÃO FINA (X, Y) */
-                /* O transform move o visual sem alterar o tamanho do bloco! */
-                transform: translate(-2.4cm, 0.24cm); 
+                /* CALIBRAÇÃO BASE (Páginas 1, 3, 5, 7...) */
+                position: relative !important;
+                left: -2.4cm !important; 
+                top: 0.24cm !important;
                 
                 page-break-inside: avoid;
-                page-break-after: always; 
+                page-break-after: always;
+                break-after: page;
             }
 
-            /* Evita que a última folha gere uma página extra no final do PDF */
+            /* CALIBRAÇÃO DO PAPEL FÍSICO (Páginas 2, 4, 6, 8...) */
+            .folha:nth-child(even) {
+                /* Se a segunda folha no papel físico sair errada, ajuste este TOP. */
+                top: 0.25cm !important; 
+            }
+
             .folha:last-child {
                 page-break-after: auto;
+                break-after: auto;
             }
         }
     </style>
@@ -140,10 +161,10 @@
         motoristasGlobais.forEach(mot => {
             let html = `<div class="folha">`;
 
-            // CABEÇALHO (Com as suas coordenadas calibradas!)
+            // CABEÇALHO
             html += `<div class="campo" style="top: 0.74cm; left: 14.63cm;">OS: ${mot.os || ""}</div>`;
-           html += `<div class="campo" style="top: 1.14cm; left: 6.22cm;">${mot.empresa || ""}</div>`;
-            html += `<div class="campo" style="top: 1.14cm; left: 12.41cm;">${(mot.nome || "").substring(0, 30)}</div>`; // Protege contra nome vazio
+            html += `<div class="campo" style="top: 1.14cm; left: 6.22cm;">${mot.empresa || ""}</div>`;
+            html += `<div class="campo" style="top: 1.14cm; left: 12.41cm;">${(mot.nome || "").substring(0, 30)}</div>`; 
             html += `<div class="campo" style="top: 1.14cm; left: 19.00cm;">${mot.data || ""}</div>`;
             html += `<div class="campo" style="top: 1.59cm; left: 6.24cm;">${mot.filial || ""}</div>`;
             html += `<div class="campo" style="top: 1.59cm; left: 12.41cm;">${mot.id || ""}</div>`;
@@ -151,7 +172,6 @@
 
             // VIAGENS
             let topoViagem = 2.70; 
-            // Se o motorista não tiver viagens, cria um array vazio para não quebrar o código
             const viagens = mot.viagens || []; 
             
             viagens.forEach(v => {
