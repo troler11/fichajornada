@@ -150,7 +150,7 @@
             html += `<div class="campo" style="top: 1.59cm; left: 18.94cm;">${mot.funcao || ""}</div>`;
 
             // VIAGENS
-            let topoViagem = 2.75; 
+            let topoViagem = 2.70; 
             // Se o motorista não tiver viagens, cria um array vazio para não quebrar o código
             const viagens = mot.viagens || []; 
             
@@ -163,7 +163,7 @@
                 html += `<div class="campo" style="top: ${topoViagem}cm; left: 12.49cm;">${v.pontoFinal || ""}</div>`;
                 html += `<div class="campo" style="top: ${topoViagem}cm; left: 14.37cm;">${v.deslocamento2 || ""}</div>`;
                 html += `<div class="campo" style="top: ${topoViagem}cm; left: 15.95cm;">${v.checkList2 || ""}</div>`;
-                topoViagem += 0.9; 
+                topoViagem += 0.8; 
             });
 
             html += `</div>`;
