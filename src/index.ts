@@ -21,6 +21,10 @@ app.post('/processar-excel', upload.single('planilha'), async (req: Request, res
         
         const motoristas: any[] = [];
         let motoristaAtual: any = null;
+        
+        // Variáveis temporárias para dados que vêm ANTES da linha do nome
+        let ultimaOSEncontrada = '';
+        let ultimaEmpresaEncontrada = '';
 
         worksheet.eachRow((row, rowNumber) => {
             const lerCelula = (num: number) => {
@@ -34,40 +38,83 @@ app.post('/processar-excel', upload.single('planilha'), async (req: Request, res
                 return String(celula.value).trim();
             };
 
+            // --------------------------------------------------------
+            // REGRA 0: Scanner de dados flutuantes (OS, Empresa, Filial, Função)
+            // --------------------------------------------------------
+            for (let i = 1; i <= 20; i++) {
+                const celulaBruta = lerCelula(i);
+                if (!celulaBruta) continue;
+                
+                const valorUpper = celulaBruta.toUpperCase();
+
+                // 1. Captura OS (Ex: 01042026011001-156)
+                if (/\d{10,}-\d{2,}/.test(valorUpper)) {
+                    ultimaOSEncontrada = celulaBruta;
+                }
+                
+                // 2. Captura Empresa (Ex: VIAÇÃO MIMO LTDA, EMPRESA 811)
+                // Procura por "VIAÇÃO", "LTDA" ou o padrão "EMPRESA + Número"
+                if (valorUpper.includes('VIAÇÃO') || valorUpper.includes('LTDA') || /^EMPRESA\s+\d+/.test(valorUpper)) {
+                    ultimaEmpresaEncontrada = celulaBruta;
+                }
+
+                // 3. Captura Filial (Ex: FILIAL 8)
+                // Se o motorista já foi criado na linha anterior, injetamos a filial nele
+                if (valorUpper.startsWith('FILIAL')) {
+                    if (motoristaAtual && motoristaAtual.viagens.length === 0) {
+                        motoristaAtual.filial = celulaBruta;
+                    }
+                }
+
+                // 4. Captura Função (Ex: MOTORISTA ONIBUS)
+                if (valorUpper.includes('MOTORISTA')) {
+                    if (motoristaAtual && motoristaAtual.viagens.length === 0) {
+                        motoristaAtual.funcao = celulaBruta;
+                    }
+                }
+            }
+
             const colB = lerCelula(2);  // Linha
             const colG = lerCelula(7);  // Nome do Motorista OU Ponto Final
-            const colL = lerCelula(12); // Data (Ajustado para a Coluna L da foto)
+            const colL = lerCelula(12); // Data
 
-            // REGRA 1: É o cabeçalho do motorista?
-            // Tem traço no nome (ex: 000204 - FRANCLIN) e a coluna da Linha (B) está vazia
+            // REGRA 1: É o cabeçalho do motorista? (Acha o Nome)
             if (colG.includes('-') && colB === '') {
+                // Se já tínhamos um motorista sendo montado, salva ele
                 if (motoristaAtual) motoristas.push(motoristaAtual);
                 
                 const partes = colG.split('-');
                 motoristaAtual = {
+                    os: ultimaOSEncontrada,
+                    empresa: ultimaEmpresaEncontrada,
+                    filial: '', // Será preenchido pelo Scanner na próxima linha
+                    funcao: '', // Será preenchido pelo Scanner na próxima linha
                     id: partes[0].trim(),
                     nome: partes.slice(1).join('-').trim(),
                     data: colL !== '' ? colL : 'Data não encontrada',
                     viagens: []
                 };
+                
+                // Limpa as variáveis temporárias para não repetirem se faltar no próximo
+                ultimaOSEncontrada = '';
+                ultimaEmpresaEncontrada = '';
             }
             // REGRA 2: É uma viagem válida (Programado)?
-            // Tem a linha preenchida (B) e o horário de CheckList preenchido (D)
-            // Isso ignora a linha vazia do "Realizado"
             else if (motoristaAtual && colB !== '' && lerCelula(4) !== '') {
                 motoristaAtual.viagens.push({
                     linha: colB,
-                    veiculo: lerCelula(3),       // C (ex: 23910)
-                    checkList1: lerCelula(4),    // D (ex: 00:20)
-                    deslocamento1: lerCelula(5), // E (ex: 00:30)
-                    pontoInicial: lerCelula(6),  // F (ex: 01:00)
-                    pontoFinal: colG,            // G (ex: 06:00) - Na viagem, G é horário!
-                    deslocamento2: lerCelula(9), // I (ex: 06:30)
-                    checkList2: lerCelula(10)    // J (ex: 06:40)
+                    veiculo: lerCelula(3),
+                    checkList1: lerCelula(4),
+                    deslocamento1: lerCelula(5),
+                    pontoInicial: lerCelula(6),
+                    pontoFinal: colG,
+                    deslocamento2: lerCelula(9),
+                    checkList2: lerCelula(10)
                 });
             }
         });
 
+        // Salva o último motorista quando acabar o loop
         if (motoristaAtual) motoristas.push(motoristaAtual);
         res.json(motoristas);
 
